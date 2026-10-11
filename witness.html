@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Confirm a purchase</title><link rel="stylesheet" href="style.css"></head>
+<body><header class="top"><div class="wrap in"><span class="brand"><span class="mark">PF</span><span>Proof Forge<small>Buyer confirmation</small></span></span></div></header>
+<main class="wrap main" id="w"></main>
+<script src="js/engine.js"></script>
+<script>
+(function () {
+  const q = new URLSearchParams(location.search), t = q.get("t"), who = q.get("n") || "a founder", what = q.get("u") || "their business";
+  const el = document.getElementById("w"), key = "pf-w-" + t;
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  let a = {};
+  function view() {
+    if (!t) return '<section class="center"><h1>This link is not valid.</h1></section>';
+    if (localStorage.getItem(key)) return '<section class="center"><h1>Thank you.</h1><p class="lead">Your answer is recorded. You can close this page.</p></section>';
+    const ch = (k, list) => '<div class="chips">' + list.map((x) => '<button class="chip ' + (a[k] === x[0] ? "on" : "") + '" data-k="' + k + '" data-v="' + x[0] + '">' + esc(x[1]) + "</button>").join("") + "</div>";
+    const ok = a.answer && (a.answer === "no" || (a.pay && a.rel));
+    return '<section><p class="eyebrow">20 seconds, please</p><h1>' + esc(who) + " says you bought something from them. Is that true?</h1><p class=\"small\">Business: " + esc(what) + ". Only your taps are recorded. No name, no phone number.</p>"
+      + '<div class="card"><h2>Did you buy from them in the last 7 days?</h2>' + ch("answer", [["yes", "Yes, I did"], ["no", "No, I did not"]])
+      + (a.answer === "yes" ? "<h2>How did you pay?</h2>" + ch("pay", [["upi", "UPI"], ["cash", "Cash"], ["card", "Card"]]) + "<h2>How do you know them?</h2>" + ch("rel", [["stranger", "I did not know them before"], ["friend", "Friend"], ["family", "Family"], ["classmate", "Classmate or colleague"]]) : "")
+      + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answer</button></section>";
+  }
+  function draw() { el.innerHTML = view(); const g = document.getElementById("go"); if (g) g.onclick = () => { localStorage.setItem(key, JSON.stringify({ answer: a.answer, pay: a.pay || null, rel: a.rel || null, at: Date.now(), device: PF.deviceId() })); draw(); }; }
+  el.addEventListener("click", (ev) => { const b = ev.target.closest("[data-k]"); if (!b) return; a[b.dataset.k] = b.dataset.v; draw(); });
+  draw();
+})();
+</script></body></html>
