@@ -243,6 +243,6 @@
     if (ok) { G.award(S, "gate:ready", 300, "Ready for investors"); }
     return `<section class="${ok ? "center" : ""}"><p class="eyebrow">After Step 4</p><h1>${ok ? "You are ready to approach investors" : "Not ready for investors yet"}</h1><p class="lead">${ok ? "Every test below passed on evidence from other people, not on your own opinion." : "These are the checks an investor will make. Fix the ones that failed, then come back."}</p>
     <div class="card ${ok ? "ok" : "no"}"><ul class="gate">${g.checks.map((c) => `<li class="${c.ok ? "ok" : "bad"}"><b>${c.ok ? "✓" : "✗"} ${e(c.label)}</b><span>${e(c.note)}</span>${c.ok ? "" : `<button class="chip" data-act="fixstep" data-n="${c.fix}">Go and fix this</button>`}</li>`).join("")}</ul></div>
-    ${ok ? `<div class="card cele"><div class="cele-ico">🚀</div><div><h3>+300 XP · Ready for investors</h3><p class="small">${G.g(S).xp} XP in total. Steps 5 to 12 take you from here to a signed cheque.</p></div></div>` : ""}</section>`;
+    ${ok ? `<div class="card cele"><div class="cele-ico">🚀</div><div><h3>+300 XP · Ready for investors</h3><p class="small">${G.g(S).xp} XP in total. Steps 5 to 12 take you from here to a signed cheque.</p></div></div><button class="btn" data-act="nextstep">Begin Step 5</button>` : ""}</section>`;
   };
 })();

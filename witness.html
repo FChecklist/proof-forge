@@ -28,6 +28,27 @@
         + (a.pay && a.pay !== "yes" ? "<h2>What holds you back?</h2>" + ch("why", [["price", "The price"], ["need", "I do not need it"], ["trust", "I do not trust a new seller"], ["timing", "Not the right time"], ["other", "Something else"]]) : "")
         + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answers</button></section>";
     }
+    const sc = (k) => ch(k, [["1", "1"], ["2", "2"], ["3", "3"], ["4", "4"]]);
+    if (kind === "connector") {
+      const ok = a.rel && a.know && a.willing && a.fwd;
+      return '<section><p class="eyebrow">30 seconds, please</p><h1>' + esc(who) + " is looking for an introduction to someone who funds or mentors startups.</h1><p class=\"small\">Business: " + esc(what) + ". Only your taps are recorded.</p>"
+        + '<div class="card"><h2>How do you know them?</h2>' + ch("rel", REL.concat([["mentor", "Mentor or teacher"], ["alumni", "Alumni"]]))
+        + "<h2>Do you know people who could help?</h2>" + ch("know", [["well", "Yes, I know them well"], ["slightly", "I know them slightly"], ["no", "No"]])
+        + "<h2>Would you open a door for them?</h2>" + ch("willing", [["yes", "Yes"], ["maybe", "Maybe"], ["no", "No"]])
+        + "<h2>Would you forward a short note from them as it is?</h2>" + ch("fwd", [["yes", "Yes"], ["no", "No"]]) + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answers</button></section>";
+    }
+    if (kind === "msg") {
+      const ok = a.clear && a.want && a.reply;
+      return '<section><p class="eyebrow">30 seconds, please</p><h1>Read the message ' + esc(who) + " will show you, then answer.</h1><p class=\"small\">Only your taps are recorded.</p>"
+        + '<div class="card"><h2>How clear is what they do? (1 unclear, 4 very clear)</h2>' + sc("clear") + "<h2>How clear is what they want from the reader?</h2>" + sc("want") + "<h2>Would you reply?</h2>" + ch("reply", [["yes", "Yes"], ["maybe", "Maybe"], ["no", "No"]]) + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answers</button></section>";
+    }
+    if (kind === "pitch") {
+      const ok = a.rel && a.clear && a.believe && a.meet && a.who && a.doubt;
+      return '<section><p class="eyebrow">45 seconds, please</p><h1>You just heard ' + esc(who) + " pitch " + esc(what) + ". Your honest rating, please.</h1><p class=\"small\">Only your taps are recorded. No name.</p>"
+        + '<div class="card"><h2>How do you know them?</h2>' + ch("rel", REL) + "<h2>How clear was the pitch? (1 to 4)</h2>" + sc("clear") + "<h2>How believable was it? (1 to 4)</h2>" + sc("believe")
+        + "<h2>Would you take a meeting if you were an investor?</h2>" + ch("meet", [["yes", "Yes"], ["maybe", "Maybe"], ["no", "No"]]) + "<h2>Could you say who pays them?</h2>" + ch("who", [["yes", "Yes"], ["no", "No"]])
+        + "<h2>What is your biggest doubt?</h2>" + ch("doubt", [["price", "The price"], ["market", "The market is too small"], ["trust", "I do not trust the team"], ["copy", "It can be copied"], ["unclear", "I did not understand it"], ["other", "Something else"]]) + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answers</button></section>";
+    }
     if (kind === "operator") {
       const ok = a.answer && (a.answer === "no" || a.hours);
       return '<section><p class="eyebrow">20 seconds, please</p><h1>' + esc(who) + " says they spent a working day in your business. Is that true?</h1><p class=\"small\">Only your taps are recorded.</p>"
