@@ -5,8 +5,8 @@
   const e = PF.esc, money = PF.inr, MS = PF.MS, val = PF.val;
   const base = () => location.href.replace(/index\.html.*$/, "").replace(/#.*$/, "").replace(/\?.*$/, "");
   const prof = (S) => S.profile || {};
-  const wlink = (S, kind, t) => base() + "witness.html?k=" + kind + "&t=" + t + "&n=" + encodeURIComponent(prof(S).name || "") + "&u=" + encodeURIComponent(prof(S).startup || "") + "&p=" + (val(S, "price") || 0) + "&pr=" + encodeURIComponent(PF.problemSentence(S) || "");
-  const golink = (S, t) => base() + "go.html?t=" + t + "&n=" + encodeURIComponent(prof(S).name || "") + "&u=" + encodeURIComponent(prof(S).startup || "") + "&p=" + (val(S, "price") || 0);
+  const wlink = (S, kind, t) => base() + "witness.html?k=" + kind + "&t=" + t + "&n=" + encodeURIComponent(prof(S).name || "") + "&u=" + encodeURIComponent(prof(S).startup || "") + "&p=" + (val(S, "price") || 0) + "&pr=" + encodeURIComponent(PF.problemSentence(S) || "") + PF.wsuffix(S, t);
+  const golink = (S, t) => base() + "go.html?t=" + t + "&n=" + encodeURIComponent(prof(S).name || "") + "&u=" + encodeURIComponent(prof(S).startup || "") + "&p=" + (val(S, "price") || 0) + PF.wsuffix(S, t);
   const newTok = (p) => p + Math.random().toString(36).slice(2, 10);
   const chipRow = (list, cur, act, key) => `<div class="chips">${list.map((x) => `<button class="chip ${cur === x[0] ? "on" : ""}" data-act="${act}" data-k="${key}" data-v="${x[0]}">${e(x[1])}</button>`).join("")}</div>`;
   const tile = (label, value, tone, sub) => `<div class="tile ${tone || ""}"><b>${value}</b><span>${e(label)}</span>${sub ? `<em>${e(sub)}</em>` : ""}</div>`;
@@ -155,7 +155,7 @@
   };
 
   // ---------- Mission 4 ----------
-  const goRead = (t) => { try { return JSON.parse(localStorage.getItem("pf-go-" + t)) || { visits: {}, signups: [], preorders: [] }; } catch (x) { return { visits: {}, signups: [], preorders: [] }; } };
+  const goRead = (t) => { if (PF._go && PF._go[t]) return JSON.parse(JSON.stringify(PF._go[t])); try { return JSON.parse(localStorage.getItem("pf-go-" + t)) || { visits: {}, signups: [], preorders: [] }; } catch (x) { return { visits: {}, signups: [], preorders: [] }; } };
   const goStats = (S) => {
     const m = MS(S, 4), dev = PF.deviceId(); if (!m.goToken) return { visits: 0, signups: 0, signupsV: 0, pre: 0, preV: 0 };
     const g = goRead(m.goToken), ok = (x) => m.allowSame || x.device !== dev;

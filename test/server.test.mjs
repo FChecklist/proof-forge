@@ -1,31 +1,37 @@
-// Tests the Pages Functions with an in-memory stand-in for D1. Run: node test/server.test.mjs
+// Tests the Pages Functions against the in-memory D1. Run: node test/server.test.mjs
 import * as W from "../functions/api/w/[token].js";
 import * as Vt from "../functions/api/v/[id].js";
+import * as Gt from "../functions/api/g/[token].js";
+import { fakeD1 } from "./fake-d1.mjs";
 import assert from "node:assert/strict";
-const rows = { witness: new Map(), vault: new Map() };
-const DB = { prepare(sql) { return { bind(...a) { return {
-  async run() { if (sql.startsWith("INSERT OR IGNORE INTO witness")) { if (rows.witness.has(a[0])) return { meta: { changes: 0 } }; rows.witness.set(a[0], { rec: a[1], at: a[3] }); return { meta: { changes: 1 } }; }
-    if (sql.startsWith("INSERT INTO vault")) { rows.vault.set(a[0], { secret_hash: a[1], meta: a[2], blob: a[3], at: a[4] }); return { meta: { changes: 1 } }; } },
-  async first() { if (sql.includes("FROM witness")) return rows.witness.get(a[0]) || null; if (sql.includes("secret_hash")) { const r = rows.vault.get(a[0]); return r ? { secret_hash: r.secret_hash } : null; } if (sql.includes("FROM vault")) return rows.vault.get(a[0]) || null; } }; } }; } };
-const env = { DB };
-const post = (tok, body) => W.onRequestPost({ request: new Request("http://x/api/w/" + tok, { method: "POST", body: typeof body === "string" ? body : JSON.stringify(body), headers: { "cf-connecting-ip": "1.2.3.4" } }), env, params: { token: tok } });
-const get = (tok) => W.onRequestGet({ env, params: { token: tok } });
+const DB = fakeD1(), env = { DB };
+const mk = (u, m, body, h) => new Request("http://x" + u, { method: m, body, headers: Object.assign({ "cf-connecting-ip": "1.2.3.4" }, h || {}) });
+const seal = (n) => JSON.stringify({ c: JSON.stringify({ iv: "AAAAAAAAAAAAAAAA", ct: "Zm9v" + n }) });
+const post = (tok, body) => W.onRequestPost({ request: mk("/api/w/" + tok, "POST", body), env, params: { token: tok } });
+const get = (tok) => W.onRequestGet({ request: mk("/api/w/" + tok, "GET"), env, params: { token: tok } });
 const T = "wabcdefgh12345";
-assert.equal((await post(T, { k: "funder", rel: "investor", stage: "received", amt: 750000, know: "stranger", device: "dx", at: 1 })).status, 201);
-assert.equal((await post(T, { k: "funder", amt: 1 })).status, 409, "a witness answer can never be overwritten");
-const g = await (await get(T)).json(); assert.equal(g.rec.amt, 750000);
+assert.equal((await post(T, seal("1"))).status, 201);
+assert.equal((await post(T, seal("2"))).status, 409, "an answer can never be overwritten");
+assert.ok((await (await get(T)).json()).c.includes("Zm9v1"));
 assert.equal((await get("wnothere12345")).status, 404);
-assert.equal((await post("bad token", { k: "buy", a: "x" })).status, 400, "bad token");
-assert.equal((await post("wzzzzzzzzzz1", { k: "evil", a: "x" })).status, 400, "unknown kind");
-assert.equal((await post("wzzzzzzzzzz2", { k: "buy", a: { x: 1 } })).status, 400, "nested value");
-assert.equal((await post("wzzzzzzzzzz3", { k: "buy", a: "x".repeat(300) })).status, 400, "long string");
-assert.equal((await post("wzzzzzzzzzz4", { k: "buy", a: 1e15 })).status, 400, "huge number");
-assert.equal((await post("wzzzzzzzzzz5", "x".repeat(3000))).status, 413);
-assert.ok(![...rows.witness.values()].some((r) => r.rec.includes("1.2.3.4")), "no raw IP stored");
-const id = "a".repeat(32), put = (secret, body) => Vt.onRequestPut({ request: new Request("http://x", { method: "PUT", body: JSON.stringify(body), headers: { "x-write": secret } }), env, params: { id } });
+assert.equal((await post("bad token", seal("x"))).status, 400, "bad token");
+assert.equal((await post("wzzzzzzzzzz1", JSON.stringify({ k: "buy", answer: "yes" }))).status, 400, "plain answers are refused: the server accepts ciphertext only");
+assert.equal((await post("wzzzzzzzzzz2", JSON.stringify({ c: "not json" }))).status, 400);
+assert.equal((await post("wzzzzzzzzzz3", JSON.stringify({ c: JSON.stringify({ iv: "short", ct: "x" }) }))).status, 400);
+assert.equal((await post("wzzzzzzzzzz4", "x".repeat(7000))).status, 413);
+assert.ok(![...DB.t.witness.values()].some((r) => JSON.stringify(r).includes("1.2.3.4")), "no raw IP stored");
+// visitor events
+const gp = (b) => Gt.onRequestPost({ request: mk("/api/g/" + T, "POST", b), env, params: { token: T } });
+assert.equal((await gp(seal("a"))).status, 201); assert.equal((await gp(seal("b"))).status, 201);
+const ev = await (await Gt.onRequestGet({ request: mk("/api/g/" + T, "GET"), env, params: { token: T } })).json(); assert.equal(ev.events.length, 2);
+// vault
+const id = "a".repeat(32), put = (secret, body) => Vt.onRequestPut({ request: mk("/api/v/" + id, "PUT", JSON.stringify(body), { "x-write": secret }), env, params: { id } });
 assert.equal((await put("s".repeat(20), { meta: { v: 1 }, blob: "CIPHERTEXT" })).status, 200);
 assert.equal((await put("t".repeat(20), { meta: { v: 1 }, blob: "EVIL" })).status, 403, "another secret cannot overwrite");
-assert.equal((await put("s".repeat(20), { meta: { v: 1, secret: "leak" }, blob: "x" })).status, 400, "secret never accepted in meta");
+assert.equal((await put("s".repeat(20), { meta: { v: 1, secret: "leak" }, blob: "x" })).status, 400);
 assert.equal((await put("s".repeat(20), { meta: { v: 1 }, blob: "CIPHERTEXT2" })).status, 200);
-const got = await (await Vt.onRequestGet({ env, params: { id } })).json(); assert.equal(got.blob, "CIPHERTEXT2");
+assert.equal((await (await Vt.onRequestGet({ request: mk("/api/v/" + id, "GET"), env, params: { id } })).json()).blob, "CIPHERTEXT2");
+// rate limit
+let last = 0; for (let i = 0; i < 125; i++) last = (await post("wlimit" + String(i).padStart(6, "0"), seal("r" + i))).status;
+assert.equal(last, 429, "a flood from one address is stopped");
 console.log("server tests: all passed");

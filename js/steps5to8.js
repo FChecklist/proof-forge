@@ -119,7 +119,7 @@
   const validUrl = (u) => { try { const x = new URL(String(u).trim()); return /^https?:$/.test(x.protocol) && x.hostname.includes("."); } catch (er) { return false; } };
   const base = () => location.href.replace(/index\.html.*$/, "").replace(/#.*$/, "").replace(/\?.*$/, "");
   const prof = (S) => S.profile || {};
-  const wl = (S, kind, t) => base() + "witness.html?k=" + kind + "&t=" + t + "&n=" + encodeURIComponent(prof(S).name || "") + "&u=" + encodeURIComponent(prof(S).startup || "") + "&p=" + (val(S, "price") || 0) + "&pr=" + encodeURIComponent(PF.problemSentence(S) || "");
+  const wl = (S, kind, t) => base() + "witness.html?k=" + kind + "&t=" + t + "&n=" + encodeURIComponent(prof(S).name || "") + "&u=" + encodeURIComponent(prof(S).startup || "") + "&p=" + (val(S, "price") || 0) + "&pr=" + encodeURIComponent(PF.problemSentence(S) || "") + PF.wsuffix(S, t);
   const tok = () => "w" + Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => (b % 36).toString(36)).join("");
   const chipRow = (list, cur, act, key) => `<div class="chips">${list.map((x) => `<button class="chip ${String(cur) === String(x[0]) ? "on" : ""}" data-act="${act}" data-k="${key}" data-v="${x[0]}">${e(x[1])}</button>`).join("")}</div>`;
   const tile = (label, value, tone) => `<div class="tile ${tone || ""}"><b>${value}</b><span>${e(label)}</span></div>`;

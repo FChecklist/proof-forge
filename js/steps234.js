@@ -6,7 +6,7 @@
   const val = (S, id) => (S.ans && S.ans[id] ? S.ans[id].v : undefined);
   const MS = (S, n) => { S.ms = S.ms || {}; return (S.ms[n] = S.ms[n] || {}); };
   PF.MS = MS;
-  PF.readW = (t) => { try { return JSON.parse(localStorage.getItem("pf-w-" + t)); } catch (e) { return null; } };
+  PF.readW = (t) => { if (PF._wc && PF._wc[t]) return PF._wc[t]; try { return JSON.parse(localStorage.getItem("pf-w-" + t)); } catch (e) { return null; } };
   const pctOf = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 
   // ======================= ITEMS =======================
