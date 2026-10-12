@@ -73,8 +73,8 @@
       const m = M(S), v = m.verdict; if (!v) return "<p>No result yet.</p>";
       const g = v.gapMsg;
       const gap = g ? `<div class="card"><h2>Prediction against reality</h2><div class="cmp"><div><h3>You predicted</h3><p>Cycle <b>${g.predDays} days</b></p><p>Gain <b>${g.predPct}%</b></p></div><div class="bad"><h3>What happened</h3><p>Cycle <b>${g.actDays} days</b></p><p>Gain <b>${g.actPct}%</b></p></div></div><p class="note">${v.bigGap ? "Your real numbers are far from your prediction. That is the daydream meeting the field. Update your Money Flow Sheet with these real numbers before Session 2." : "Your real numbers are close to your prediction. Good model. Step 2 tests whether customers outside your circle behave the same way."}</p></div>` : "";
-      if (v.ok) return `<section class="center"><p class="eyebrow">Mission 1 · checked</p><h1>Proof accepted</h1><div class="card ok"><h2>Gate to Session 2: OPEN</h2><ul class="ded">${v.pass.map((p) => `<li><span>✓ ${e(p)}</span></li>`).join("")}</ul></div>${gap}<div class="card locked open"><h2>Session 2: Customer truth</h2><p>20 real conversations. 10 real NOs. Unlocked.</p></div><button class="btn" data-act="mreview">Edit my proof</button></section>`;
-      return `<section><p class="eyebrow">Mission 1 · checked</p><h1>Not accepted yet</h1><div class="card no"><h2>Gate to Session 2: LOCKED</h2><p>${v.fails.length} thing(s) to fix. Fix them and submit again.</p><ul class="fails">${v.fails.map((x) => `<li><b>${e(x.t)}</b><span>Next step: ${e(x.fix)}</span></li>`).join("")}</ul></div>${gap}<div class="card locked"><h2>Session 2: Customer truth</h2><p>Locked until the proof passes.</p></div><button class="btn" data-act="mreview">Fix and resubmit</button></section>`;
+      if (v.ok) return `<section class="center"><p class="eyebrow">Mission 1 · checked</p><h1>Proof accepted</h1><div class="card cele"><div class="cele-ico">🏆</div><div><h3>Gate to Step 2: OPEN</h3><p class="small">+150 XP · Level ${PF.game.level(PF.game.g(S).xp).n}: ${e(PF.game.level(PF.game.g(S).xp).name)} · ${PF.game.g(S).xp} XP in total</p></div></div><div class="card ok"><h2>What passed</h2><ul class="ded">${v.pass.map((p) => `<li><span>✓ ${e(p)}</span></li>`).join("")}</ul></div>${gap}<div class="card locked open"><h2>Step 2: Customer truth</h2><p>Unlocked.</p></div><button class="btn" data-act="mreview">Edit my proof</button></section>`;
+      return `<section><p class="eyebrow">Mission 1 · checked</p><h1>Not accepted yet</h1><div class="card no"><h2>Gate to Step 2: LOCKED</h2><p>${v.fails.length} thing(s) to fix. Fix them and submit again.</p><ul class="fails">${v.fails.map((x) => `<li><b>${e(x.t)}</b><span>Next step: ${e(x.fix)}</span></li>`).join("")}</ul></div>${gap}<div class="card locked"><h2>Step 2: Customer truth</h2><p>Locked until the proof passes.</p></div><button class="btn" data-act="mreview">Fix and resubmit</button></section>`;
     },
     click(act, d, S, h) {
       const m = M(S), f = F(S);
@@ -83,7 +83,16 @@
       if (act === "madd") { const t = "w" + Math.random().toString(36).slice(2, 10); (m.witnesses = m.witnesses || []).push({ token: t, at: Date.now() }); h.save(); h.render(); return true; }
       if (act === "mcopy") { const link = base() + "witness.html?t=" + d.t + "&n=" + encodeURIComponent((S.profile || {}).name || "") + "&u=" + encodeURIComponent((S.profile || {}).startup || ""); try { navigator.clipboard.writeText(link); } catch (x) { /* ignore */ } d.copied = true; alert("Link copied. Send it to your buyer on WhatsApp.\n\n" + link); return true; }
       if (act === "mdemo") { m.witnesses = m.witnesses || []; const rels = ["stranger", "stranger", "classmate", "friend", "stranger", "family"]; rels.forEach((rel, i) => { const t = "sim" + Date.now().toString(36) + i; m.witnesses.push({ token: t, at: Date.now() }); localStorage.setItem(wkey(t), JSON.stringify({ answer: "yes", pay: "upi", rel, at: Date.now(), device: "sim-device-" + i })); }); h.save(); h.render(); return true; }
-      if (act === "msubmit") { m.verdict = evaluate(S); m.attempts = (m.attempts || 0) + 1; h.go("missionVerdict"); return true; }
+      if (act === "msubmit") {
+        const G = PF.game, prev = m.verdict; m.verdict = evaluate(S); m.attempts = (m.attempts || 0) + 1; const v = m.verdict;
+        G.award(S, "m:attempt", 10, "Submitted proof");
+        if (prev && !prev.ok) G.award(S, "m:retry:" + m.attempts, 20, "Grit: tried again after a rejection");
+        if (v.pass.some((t) => /alternatives listed/.test(t))) G.award(S, "m:alts", 40, "5 real alternatives found");
+        if (v.pass.some((t) => /Purchase proof/.test(t))) G.award(S, "m:buy", 30, "Purchase proof uploaded");
+        if (v.pass.some((t) => /Sales payment proof/.test(t))) G.award(S, "m:sale", 30, "Customer payment proofs");
+        for (let i = 0; i < Math.min(6, v.valid); i++) G.award(S, "m:buyer:" + i, 15, "A real buyer confirmed");
+        if (v.ok) { G.award(S, "m:pass", 150, "Gate opened"); G.celebrate(S, "Gate to Step 2 is OPEN", "Your proof was accepted", 150); }
+        G.checkBadges(S); h.go("missionVerdict"); return true; }
       if (act === "mreview") { h.go("missionSubmit"); return true; }
       return false;
     },
