@@ -344,9 +344,10 @@
       <div class="card"><h2>Your claim</h2><p class="small">Everything I submit is true and complete. I understand a person audits it, and that a false claim ends the refund.</p>${H.chipRow([["yes", "Yes, it is true and complete"]], m.honest, "mset", "honest")}<div class="chips"><button class="chip" data-act="mdemo">Demo: simulate the money</button>${H.sameBox(m)}</div></div>
       <button class="btn" data-act="msubmit">Submit my claim</button></section>`;
     },
-    verdict: (S) => { const v = MS(S, 12).verdict; return shell(S, 12, v, (v.ok ? `<div class="card cele"><div class="cele-ico">🏁</div><div><h3>Your whole deposit of ${money(FEE)} is earned</h3><p class="small">A person audits your papers, then pays the refund. Claim code: ${e(PF.claimCode(S))}</p></div></div>` : PF.planB(S)) + PF.outcomesCard(S), null, "You did it"); },
+    verdict: (S) => { const v = MS(S, 12).verdict; return shell(S, 12, v, (v.ok ? `<div class="card cele"><div class="cele-ico">🏁</div><div><h3>Your whole deposit of ${money(FEE)} is earned</h3><p class="small">A person audits your papers, then pays the refund. Claim code: ${e(PF.claimCode(S))}</p></div></div><div class="card"><h2>Send us your audit pack</h2><p class="small">Everything stays locked unless you claim. This button locks your claim bundle so that only our audit team can open it. Send us the file together with your bank statements and papers.</p><button class="btn" data-act="mpack">Download my audit pack</button></div>` : PF.planB(S)) + PF.outcomesCard(S), null, "You did it"); },
     click(act, d, S, h) {
       if (addKind(act, d, S, h)) return true;
+      if (act === "mpack") { PF.downloadAuditPack(S); return true; }
       if (act !== "mdemo") return false;
       const m = MS(S, 12), c = PF.contract(S); m.witnesses = [];
       sim(m, "funder", { rel: "investor", stage: "received", amt: Math.round(c.fund * 0.3), know: "stranger" }, "f1");
@@ -354,6 +355,12 @@
     },
     award(S, v, G) { G.award(S, "m12:attempt", 10, "Submitted your claim"); if (v.ok) { G.award(S, "m12:pass", 800, "All three tests passed"); G.celebrate(S, "Whole deposit earned", "Sales, profit and money, all proven", 800); } },
     after: bindAll,
+  };
+  PF.auditBundle = (S) => { const wit = {}; Object.values(S.ms || {}).forEach((m) => (m.witnesses || []).forEach((w) => { wit[w.token] = PF.readW(w.token); })); return { v: 1, at: Date.now(), claim: PF.claimCode(S), profile: S.profile, contract: PF.contract(S), refund: PF.refund(S), answers: S.ans, missions: S.ms, witnessRecords: wit }; };
+  PF.downloadAuditPack = async (S) => {
+    if (!PF.CONFIG.auditKey) return alert("The audit team's key is not set on this site yet, so a pack cannot be made.");
+    const text = await PF.vault.auditPack(PF.auditBundle(S), PF.CONFIG.auditKey), a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: "application/json" })); a.download = "proof-forge-audit-" + PF.claimCode(S) + ".pfaudit"; a.click();
   };
   PF.claimCode = (S) => "PF-" + ((S.seed || 1) * 7919 % 100000).toString().padStart(5, "0") + "-" + new Date().getFullYear();
   PF.missions[9] = M9; PF.missions[10] = M10; PF.missions[11] = M11; PF.missions[12] = M12;

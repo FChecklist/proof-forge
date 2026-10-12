@@ -1,0 +1,8 @@
+name = "proof-forge"
+compatibility_date = "2024-09-01"
+pages_build_output_dir = "."
+# Free tier only: Pages + Functions + D1. No R2, no paid add-ons.
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "proof-forge"
+# database_id = "<filled in at deploy>"

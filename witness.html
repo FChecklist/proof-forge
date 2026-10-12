@@ -109,7 +109,7 @@
       + (a.answer === "yes" ? "<h2>How did you pay?</h2>" + ch("pay", [["upi", "UPI"], ["cash", "Cash"], ["card", "Card"]]) + "<h2>How do you know them?</h2>" + ch("rel", REL) : "")
       + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answer</button></section>";
   }
-  function draw() { el.innerHTML = view(); const g = document.getElementById("go"); if (g) g.onclick = () => { localStorage.setItem(key, JSON.stringify(Object.assign({ k: kind, at: Date.now(), device: PF.deviceId() }, a))); draw(); }; }
+  function draw() { el.innerHTML = view(); const g = document.getElementById("go"); if (g) g.onclick = () => { const rec = Object.assign({ k: kind, at: Date.now(), device: PF.deviceId() }, a); localStorage.setItem(key, JSON.stringify(rec)); if (location.protocol !== "file:") { try { fetch("/api/w/" + t, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(rec) }).catch(function () {}); } catch (x) { /* offline */ } } draw(); }; }
   el.addEventListener("change", (ev) => { const n = ev.target.closest("[data-n]"); if (!n) return; a[n.dataset.n] = n.value; draw(); });
   el.addEventListener("click", (ev) => { const b = ev.target.closest("[data-k]"); if (!b) return; a[b.dataset.k] = b.dataset.v; draw(); });
   draw();

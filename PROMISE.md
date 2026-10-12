@@ -14,3 +14,13 @@ Owner model: the founder pays Rs 19,999 and earns it back.
 
 ## Owner/lawyer decisions still open
 Floors above; refund timing (suggest: paid after audit and a 30-day no-reversal check); tax/GST treatment of a refund; refund terms in the sale contract; who audits.
+
+## Punchline (2026-10-12)
+Rejected: "get it back as you earn it" (flat), "Make it work, and it's free" (vague). Current: **"₹19,999 to start. ₹0 if you win."** with the conditions directly under it on the intro screen ("win" = the Step 9 and Step 12 targets). Alternates: "Back yourself. We will pay you back." / "Your startup pays your fee." / "Raise it. Prove it. Get it back." Never use an unconditional "free" or "guaranteed".
+
+## Architecture (no server compute, free tier only)
+- All logic runs on the founder's laptop or phone. Their data is encrypted on the device (AES-256-GCM; key wrapped by a PBKDF2-600k passphrase key and by a one-time recovery code). We hold only ciphertext (optional copy in Cloudflare D1 for restore on another device). Lost passphrase and recovery code = data lost, by design.
+- Witness answers (funders, accountants, customers) go to an append-only D1 mailbox the founder cannot edit. IPs are stored only as salted hashes, for fraud checks at audit.
+- At claim time the founder locks their bundle to the audit team's public key (RSA-OAEP + AES-GCM). Generate the pair with tools/gen-audit-key.cjs; the private key stays offline.
+- Free only: Cloudflare Pages + Functions + D1. No R2 (may need a card), so bank statements and papers are not stored by us; the founder sends them with the audit pack.
+- Not deployed. To deploy: create the D1 database, run migrations/0001_init.sql, bind it as DB, set PF.CONFIG.cloud = true and PF.CONFIG.auditKey.

@@ -120,7 +120,7 @@
   const base = () => location.href.replace(/index\.html.*$/, "").replace(/#.*$/, "").replace(/\?.*$/, "");
   const prof = (S) => S.profile || {};
   const wl = (S, kind, t) => base() + "witness.html?k=" + kind + "&t=" + t + "&n=" + encodeURIComponent(prof(S).name || "") + "&u=" + encodeURIComponent(prof(S).startup || "") + "&p=" + (val(S, "price") || 0) + "&pr=" + encodeURIComponent(PF.problemSentence(S) || "");
-  const tok = () => "w" + Math.random().toString(36).slice(2, 10);
+  const tok = () => "w" + Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => (b % 36).toString(36)).join("");
   const chipRow = (list, cur, act, key) => `<div class="chips">${list.map((x) => `<button class="chip ${String(cur) === String(x[0]) ? "on" : ""}" data-act="${act}" data-k="${key}" data-v="${x[0]}">${e(x[1])}</button>`).join("")}</div>`;
   const tile = (label, value, tone) => `<div class="tile ${tone || ""}"><b>${value}</b><span>${e(label)}</span></div>`;
   const rows = (S, m, kind, label) => (m.witnesses || []).map((w, i) => { const r = PF.readW(w.token), same = r && r.device === PF.deviceId() && !m.allowSame; const st = !r ? "Waiting" : same ? "Same device: does not count" : "Answered"; return `<div class="wrow ${!r ? "wait" : st === "Answered" ? "ok" : "bad"}"><span>${label} ${i + 1}</span><b>${st}</b><div class="chips"><button class="chip" data-act="wcopy" data-link="${e(wl(S, kind, w.token))}">Copy link</button><a class="chip" target="_blank" rel="noopener" href="${e(wl(S, kind, w.token))}">Open (demo)</a></div></div>`; }).join("");
