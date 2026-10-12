@@ -5,21 +5,42 @@
 <script src="js/engine.js"></script>
 <script>
 (function () {
-  const q = new URLSearchParams(location.search), t = q.get("t"), who = q.get("n") || "a founder", what = q.get("u") || "their business";
+  const q = new URLSearchParams(location.search), t = q.get("t"), kind = q.get("k") || "buy", who = q.get("n") || "a founder", what = q.get("u") || "their business", price = Number(q.get("p") || 0), prob = q.get("pr") || "";
   const el = document.getElementById("w"), key = "pf-w-" + t;
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const inr = (n) => "₹" + Number(n).toLocaleString("en-IN");
   let a = {};
+  const ch = (k, list) => '<div class="chips">' + list.map((x) => '<button class="chip ' + (a[k] === x[0] ? "on" : "") + '" data-k="' + k + '" data-v="' + x[0] + '">' + esc(x[1]) + "</button>").join("") + "</div>";
+  const REL = [["stranger", "I did not know them before"], ["friend", "Friend"], ["family", "Family"], ["classmate", "Classmate or colleague"]];
   function view() {
     if (!t) return '<section class="center"><h1>This link is not valid.</h1></section>';
     if (localStorage.getItem(key)) return '<section class="center"><h1>Thank you.</h1><p class="lead">Your answer is recorded. You can close this page.</p></section>';
-    const ch = (k, list) => '<div class="chips">' + list.map((x) => '<button class="chip ' + (a[k] === x[0] ? "on" : "") + '" data-k="' + k + '" data-v="' + x[0] + '">' + esc(x[1]) + "</button>").join("") + "</div>";
+    if (kind === "interview") {
+      const ok = a.rel && a.face && a.today && a.role && a.pay && a.dep && (a.pay === "yes" || a.why);
+      return '<section><p class="eyebrow">40 seconds, please</p><h1>' + esc(who) + " is testing an idea and wants your honest answer.</h1><p class=\"small\">Business: " + esc(what) + ". Only your taps are recorded. No name, no phone number. There is no right answer.</p>"
+        + (prob ? '<div class="card"><p><b>The problem they want to solve:</b> ' + esc(prob) + "</p></div>" : "")
+        + '<div class="card"><h2>How do you know them?</h2>' + ch("rel", REL)
+        + "<h2>How often do you run into this problem?</h2>" + ch("face", [["often", "Often"], ["sometimes", "Sometimes"], ["rarely", "Rarely"], ["never", "Never"]])
+        + "<h2>What do you do about it today?</h2>" + ch("today", [["paid", "I pay for something"], ["mix", "I use free things and sometimes pay"], ["free", "Only free things"], ["none", "Nothing"]])
+        + "<h2>Who would buy it?</h2>" + ch("role", [["user", "I would use it"], ["payer", "I would pay for someone else"], ["both", "I would use it and pay"]])
+        + "<h2>If it cost " + (price ? inr(price) : "their price") + ", would you buy?</h2>" + ch("pay", [["yes", "Yes"], ["maybe", "Maybe"], ["no", "No"]])
+        + "<h2>Would you put down a small deposit today?</h2>" + ch("dep", [["yes", "Yes"], ["no", "No"]])
+        + (a.pay && a.pay !== "yes" ? "<h2>What holds you back?</h2>" + ch("why", [["price", "The price"], ["need", "I do not need it"], ["trust", "I do not trust a new seller"], ["timing", "Not the right time"], ["other", "Something else"]]) : "")
+        + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answers</button></section>";
+    }
+    if (kind === "operator") {
+      const ok = a.answer && (a.answer === "no" || a.hours);
+      return '<section><p class="eyebrow">20 seconds, please</p><h1>' + esc(who) + " says they spent a working day in your business. Is that true?</h1><p class=\"small\">Only your taps are recorded.</p>"
+        + '<div class="card"><h2>Did they spend time working with you?</h2>' + ch("answer", [["yes", "Yes, they did"], ["no", "No, they did not"]])
+        + (a.answer === "yes" ? "<h2>For how many hours?</h2>" + ch("hours", [["4", "About 4"], ["8", "About 8"], ["12", "More than 8"]]) : "") + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answer</button></section>";
+    }
     const ok = a.answer && (a.answer === "no" || (a.pay && a.rel));
     return '<section><p class="eyebrow">20 seconds, please</p><h1>' + esc(who) + " says you bought something from them. Is that true?</h1><p class=\"small\">Business: " + esc(what) + ". Only your taps are recorded. No name, no phone number.</p>"
       + '<div class="card"><h2>Did you buy from them in the last 7 days?</h2>' + ch("answer", [["yes", "Yes, I did"], ["no", "No, I did not"]])
-      + (a.answer === "yes" ? "<h2>How did you pay?</h2>" + ch("pay", [["upi", "UPI"], ["cash", "Cash"], ["card", "Card"]]) + "<h2>How do you know them?</h2>" + ch("rel", [["stranger", "I did not know them before"], ["friend", "Friend"], ["family", "Family"], ["classmate", "Classmate or colleague"]]) : "")
+      + (a.answer === "yes" ? "<h2>How did you pay?</h2>" + ch("pay", [["upi", "UPI"], ["cash", "Cash"], ["card", "Card"]]) + "<h2>How do you know them?</h2>" + ch("rel", REL) : "")
       + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answer</button></section>";
   }
-  function draw() { el.innerHTML = view(); const g = document.getElementById("go"); if (g) g.onclick = () => { localStorage.setItem(key, JSON.stringify({ answer: a.answer, pay: a.pay || null, rel: a.rel || null, at: Date.now(), device: PF.deviceId() })); draw(); }; }
+  function draw() { el.innerHTML = view(); const g = document.getElementById("go"); if (g) g.onclick = () => { localStorage.setItem(key, JSON.stringify(Object.assign({ k: kind, at: Date.now(), device: PF.deviceId() }, a))); draw(); }; }
   el.addEventListener("click", (ev) => { const b = ev.target.closest("[data-k]"); if (!b) return; a[b.dataset.k] = b.dataset.v; draw(); });
   draw();
 })();

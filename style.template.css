@@ -165,3 +165,13 @@ input[type=file]{font:inherit;padding:8px;border:1.5px dashed #C9C3E4;border-rad
 .opts .opt:nth-child(5n+3):not(.tf):not(.tick)::before{background:#D1FAE5;color:#065F46}
 .opts .opt:nth-child(5n+4):not(.tf):not(.tick)::before{background:#FEF3C7;color:#92400E}
 .opts .opt.on::before{background:#fff!important;color:var(--ink)!important}
+
+/* steps 2-4 */
+#app[data-theme=c]{--a1:#0F766E;--a2:#0E7490;--ap:#D5F5EE;--aline:#8FDCCB}
+#app[data-theme=d]{--a1:#B45309;--a2:#C2410C;--ap:#FDEBD0;--aline:#F3C98A}
+#app[data-theme=e]{--a1:#0B8F5E;--a2:#1D4ED8;--ap:#D9F5E8;--aline:#9BDDBB}
+.qrow{display:grid;gap:8px;margin:10px 0;padding-bottom:10px;border-bottom:1px solid #E5E7EB}
+.gate{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.gate li{display:grid;gap:4px;padding:12px;border-radius:12px;background:#F8FAFC;border:1px solid #E5E7EB}
+.gate li.ok{border-color:#0B8F5E}.gate li.bad{border-color:#DC2626}
+.gate span{color:#475569;font-size:.92rem}

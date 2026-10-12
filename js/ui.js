@@ -2,8 +2,9 @@
 (function () {
   const PF = (window.PF = window.PF || {});
   const e = PF.esc, $app = document.getElementById("app");
-  const fresh = () => ({ v: 1, screen: "intro", profile: null, seed: 0, daydream: 50, flavour: null, shape: null, router: {}, ans: {}, tags: {}, mirror: {}, shown: [], u: 0, qi: 0, pi: 0, queue: {}, sub: null, t0: null, rebuild: {}, mission: {} });
+  const fresh = () => ({ v: 1, screen: "intro", profile: null, seed: 0, daydream: 50, flavour: null, shape: null, router: {}, ans: {}, tags: {}, mirror: {}, shown: [], u: 0, qi: 0, pi: 0, queue: {}, sub: null, t0: null, rebuild: {}, mission: {}, step: 1, ms: {} });
   let S = PF.store.load() || fresh();
+  S.step = S.step || 1; S.ms = S.ms || {}; if (PF.setStep) PF.setStep(S.step);
   PF.game.soundOn = !!(S.game && S.game.sound);
   const save = () => PF.store.save(S);
   const go = (screen, extra) => { Object.assign(S, extra || {}, { screen, sub: null }); save(); render(); window.scrollTo(0, 0); };
@@ -19,13 +20,15 @@
     (un.grp || []).forEach((g, gi) => { const picked = g.map((i) => ids[i]); const sh = PF.shuffle(picked, PF.rng(S.seed + u * 101 + gi)); g.forEach((i, k) => (ids[i] = sh[k])); });
     return ids.filter((id) => { const it = PF.ITEMS[id]; return !it.only || it.only(S); });
   }
-  const queue = () => { if (!S.queue[S.u]) S.queue[S.u] = buildQueue(S.u); return S.queue[S.u]; };
+  const qk = () => (S.step || 1) + ":" + S.u;
+  const queue = () => { if (!S.queue[qk()]) S.queue[qk()] = buildQueue(S.u); return S.queue[qk()]; };
   const curId = () => queue()[S.qi];
   const optsFor = (id) => { const it = PF.ITEMS[id], base = it.optsFn ? it.optsFn(S) : it.opts; if (!base || it.ord || it.fmt === "pair" || it.fmt === "reflex" || it.fmt === "tf") return base; const keep = base.filter((o) => o.v === it.excl), rest = base.filter((o) => o.v !== it.excl); return PF.shuffle(rest, PF.rng(S.seed + PF.hash(id))).concat(keep); };
   const clock = () => { if (!S.t0) return "00:00"; const s = Math.floor((Date.now() - S.t0) / 1000); return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); };
   const money = (n) => PF.inr(n);
   const FLOWER = `<svg viewBox="-20 -20 40 40" width="28" height="28" aria-hidden="true"><circle r="17" fill="#FFD23F" stroke="#B45309" stroke-width="2"/><text y="7" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="20" fill="#7C2D12">₹</text></svg>`;
-  const themeOf = () => (["missionBrief", "missionSubmit", "missionVerdict"].includes(S.screen) ? "m" : ["intro", "daydream", "verdict"].includes(S.screen) ? "a" : ["unitIntro", "prelude", "q", "story", "mirror", "roundEnd"].includes(S.screen) ? (S.u <= 2 ? "a" : "b") : "b");
+  const stepTheme = () => ((PF.STEPS && PF.STEPS[(S.step || 1) - 1] && PF.STEPS[(S.step || 1) - 1].theme) || null);
+  const themeOf = () => (["missionBrief", "missionSubmit", "missionVerdict"].includes(S.screen) ? "m" : (S.step || 1) > 1 && S.screen !== "gate" ? stepTheme() : S.screen === "gate" ? "m" : ["intro", "daydream", "verdict"].includes(S.screen) ? "a" : ["unitIntro", "prelude", "q", "story", "mirror", "roundEnd"].includes(S.screen) ? (S.u <= 2 ? "a" : "b") : "b");
 
   // ---------- chrome ----------
   const gstat = () => { const g = PF.game.g(S), L = PF.game.level(g.xp); return `<div class="gstat" title="${g.xp} XP"><span class="lv">${L.icon} <b>Lv ${L.n}</b> <em>${e(L.name)}</em></span><span class="xpbar" role="progressbar" aria-label="Progress to the next level" aria-valuenow="${L.pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${L.pct}%"></i></span><span class="gstar">★ ${PF.game.stars(S)}</span><span class="gcoin"><i>₹</i>${g.coins}</span></div>`; };
@@ -33,7 +36,7 @@
   const overlayHTML = () => { const g = PF.game.g(S); if (!g.levelUp) return ""; const L = PF.game.LEVELS[g.levelUp - 1]; return `<div class="ovl" role="dialog" aria-modal="true" aria-label="Level up"><div class="ovl-card"><div class="ovl-ico">${L.icon}</div><p class="eyebrow">Level up</p><h1>Level ${L.n}: ${e(L.name)}</h1><p class="lead">${LVLMSG[L.n] || ""}</p><button class="btn" data-act="lvlok">Keep going</button></div></div>`; };
   function topbar() {
     const dots = PF.UNITS.map((u, i) => `<i class="dot ${i < S.u ? "done" : i === S.u && ["unitIntro", "prelude", "q", "story", "mirror", "verdict", "roundEnd"].includes(S.screen) ? "now" : ""}" title="Unit ${i + 1}: ${e(u.title)}"></i>`).join("");
-    return `<header class="top"><div class="wrap in"><a class="brand" href="#" data-act="home"><span class="mark">${FLOWER}</span><span>Proof Forge<small>Step 1 · The idea on trial</small></span></a><div class="dots" aria-label="Units">${dots}</div><div class="meta">${gstat()}<button class="mini" data-act="snd" aria-pressed="${PF.game.soundOn}">${PF.game.soundOn ? "Sound on" : "Sound off"}</button><button class="mini" data-act="reset" title="Start over (clears this browser)">Reset</button></div></div></header>`;
+    return `<header class="top"><div class="wrap in"><a class="brand" href="#" data-act="home"><span class="mark">${FLOWER}</span><span>Proof Forge<small>Step ${S.step || 1} · ${e(PF.STEPS ? PF.STEPS[(S.step || 1) - 1].name : "The idea on trial")}</small></span></a><div class="dots" aria-label="Units">${dots}</div><div class="meta">${gstat()}<button class="mini" data-act="snd" aria-pressed="${PF.game.soundOn}">${PF.game.soundOn ? "Sound on" : "Sound off"}</button><button class="mini" data-act="reset" title="Start over (clears this browser)">Reset</button></div></div></header>`;
   }
   function render() {
     const fn = SCREENS[S.screen] || SCREENS.intro;
@@ -138,7 +141,7 @@
     },
     unitIntro() {
       const un = unit();
-      return `<section class="center"><p class="eyebrow">Chapter ${un.ch}: ${e(un.chName)} · Round ${S.u + 1} of ${PF.UNITS.length}</p><h1>${e(un.title)}</h1><p class="lead">What we will find out: <b>${e(un.finds)}</b></p><p class="small">Your idea: ${e(flavourOf())}</p><button class="btn" data-act="unitgo">Start</button></section>`;
+      return `<section class="center"><p class="eyebrow">${un.ch ? "Chapter " + un.ch + ": " + e(un.chName) : "Step " + (S.step || 1) + ": " + e(PF.STEPS[(S.step || 1) - 1].name)} · Round ${S.u + 1} of ${PF.UNITS.length}</p><h1>${e(un.title)}</h1><p class="lead">What we will find out: <b>${e(un.finds)}</b></p><p class="small">Your idea: ${e(flavourOf())}</p><button class="btn" data-act="unitgo">Start</button></section>`;
     },
     prelude() {
       const un = unit(), c = un.prelude[S.pi];
@@ -147,7 +150,7 @@
     q() {
       const q = queue(), id = curId(), it = PF.ITEMS[id], c = PF.ctx(S), n = S.qi + 1;
       const head = `<div class="qhead"><span>Round ${S.u + 1} · Question ${n} of ${q.length}</span><div class="prog"><i style="width:${Math.round((S.qi / q.length) * 100)}%"></i></div></div>`;
-      if (it.fmt === "reveal") { const fl = PF.flow(S); const html = it.kind === "problem" ? REVEALS.problem() : fl ? REVEALS[it.kind](fl) : "<p>Some answers are missing, so the numbers cannot be shown yet.</p>"; return `<section>${head}<div class="card reveal">${html}</div><button class="btn" data-act="qnext">Continue</button></section>`; }
+      if (it.fmt === "reveal") { const fl = PF.flow(S); const html = (PF.REVEALS_EXTRA && PF.REVEALS_EXTRA[it.kind]) ? PF.REVEALS_EXTRA[it.kind](S) : it.kind === "problem" ? REVEALS.problem() : fl ? REVEALS[it.kind](fl) : "<p>Some answers are missing, so the numbers cannot be shown yet.</p>"; return `<section>${head}<div class="card reveal">${html}</div><button class="btn" data-act="qnext">Continue</button></section>`; }
       if (S.sub && S.sub.kind === "conf") return `<section class="center">${head}<h1>How sure are you of that answer?</h1><div class="opts three"><button class="opt" data-act="conf" data-v="50">Not sure<small>50%</small></button><button class="opt" data-act="conf" data-v="75">Fairly sure<small>75%</small></button><button class="opt" data-act="conf" data-v="100">Certain<small>100%</small></button></div></section>`;
       if (S.sub && S.sub.kind === "fb") { const a = S.ans[id], ok = it.correctSet ? PF.sameSet(a.v, it.correctSet) : a.v === it.correct; return `<section class="center">${head}<div class="card fb ${ok ? "ok" : "no"}"><h2>${ok ? "Correct" : "Not quite"}</h2><p>${e(it.expl)}</p></div><button class="btn" data-act="qnext">Continue</button></section>`; }
       const text = e(it.text(c)), why = it.why ? `<details class="why"><summary>Why we ask</summary><p>${e(it.why)}</p></details>` : "";
@@ -169,7 +172,7 @@
     },
     mirror() {
       const un = unit(), ids = new Set(un.items), list = mirrorList();
-      return `<section><p class="eyebrow">The mirror · Round ${S.u + 1}</p><h1>${list.length ? "Your answers do not agree. Look closely." : "Mirror clear: your answers agree."}</h1>${list.map((c) => `<div class="card mir"><h3>${e(c.title)}</h3><p>${e(c.msg)}</p><p class="small">${c.q.length > 1 ? "Which is closer to the truth?" : "How do you take this?"}</p><div class="chips">${(c.q.length > 1 ? [["first", "My first answer"], ["second", "My second answer"], ["unsure", "I am not sure"]] : [["accept", "Fair point"], ["prove", "I can prove otherwise"], ["unsure", "I am not sure"]]).map((o) => `<button class="chip ${S.mirror[c.id] === o[0] ? "on" : ""}" data-act="mir" data-id="${c.id}" data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`).join("")}${list.length ? '<p class="small">"I am not sure" is a valid, honest answer.</p>' : ""}<button class="btn" data-act="mnext" ${list.every((c) => S.mirror[c.id]) ? "" : "disabled"}>${S.u === 2 ? "See the verdict" : S.u + 1 < PF.UNITS.length ? "Next round" : "See my results"}</button></section>`;
+      return `<section><p class="eyebrow">The mirror · Round ${S.u + 1}</p><h1>${list.length ? "Your answers do not agree. Look closely." : "Mirror clear: your answers agree."}</h1>${list.map((c) => `<div class="card mir"><h3>${e(c.title)}</h3><p>${e(c.msg)}</p><p class="small">${c.q.length > 1 ? "Which is closer to the truth?" : "How do you take this?"}</p><div class="chips">${(c.q.length > 1 ? [["first", "My first answer"], ["second", "My second answer"], ["unsure", "I am not sure"]] : [["accept", "Fair point"], ["prove", "I can prove otherwise"], ["unsure", "I am not sure"]]).map((o) => `<button class="chip ${S.mirror[c.id] === o[0] ? "on" : ""}" data-act="mir" data-id="${c.id}" data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`).join("")}${list.length ? '<p class="small">"I am not sure" is a valid, honest answer.</p>' : ""}<button class="btn" data-act="mnext" ${list.every((c) => S.mirror[c.id]) ? "" : "disabled"}>${nextLabel()}</button></section>`;
     },
     roundEnd() {
       const r = S.lastRound || PF.game.roundEnd(S, S.u), g = PF.game.g(S), L = PF.game.level(g.xp), un = unit();
@@ -180,16 +183,18 @@
       return `<section class="center rend"><p class="eyebrow">Round ${S.u + 1} complete</p><h1>${e(un.title)}</h1><div class="stars" role="img" aria-label="${r.stars} of 3 stars">${[0, 1, 2].map(star).join("")}</div><p class="lead">${msg}</p>
       <div class="card xpbox"><h3>Points earned</h3><ul class="ded">${r.parts.length ? r.parts.map((p) => `<li><span>${e(p.label)}</span><b class="plus">+${p.xp} XP</b></li>`).join("") : "<li><span>Already collected</span><b class=\"plus\">+0</b></li>"}${total ? `<li class="tot"><span>Total this round</span><b class="plus">+${total} XP</b></li>` : ""}</ul></div>
       <div class="chips cc">${r.streak >= 2 ? `<span class="chip on">🔥 Momentum x${r.streak}</span>` : ""}<span class="chip">${e(next)}</span></div>
-      <button class="btn" data-act="roundnext">${S.u === 2 ? "See the verdict" : S.u + 1 < PF.UNITS.length ? "Next round" : "See my results"}</button></section>`;
+      <button class="btn" data-act="roundnext">${nextLabel()}</button></section>`;
     },
     results() { return resultsScreen(); },
     rebuild() { return rebuildScreen(); },
     missionBrief() { return PF.missionUI.brief(S); },
     missionSubmit() { return PF.missionUI.submit(S); },
+    gate() { return PF.gateHTML(S); },
     verdict() { return verdictScreen(); },
     missionVerdict() { return PF.missionUI.verdict(S); },
   };
 
+  function nextLabel() { return unit().after === "verdict" ? "See the verdict" : S.u + 1 < PF.UNITS.length ? "Next round" : (S.step || 1) > 1 ? "Go to the mission" : "See my results"; }
   function mirrorList() {
     const un = unit(), ids = new Set(un.items), inUnit = (c) => c.q.some((q) => ids.has(q)) && c.q.every((q) => S.ans[q]);
     return PF.checks(S).filter((c) => inUnit(c) && !S.shown.includes(c.id));
@@ -335,10 +340,13 @@
     if (act === "torebuild") return go("rebuild");
     if (act === "fix") { S.rebuild[d.id] = Number(d.v); PF.game.award(S, "fix:" + d.id, 10, "Chose a fix"); save(); return render(); }
     if (act === "tomission") return go("missionBrief");
+    if (act === "nextstep") { const n = (S.step || 1) + 1; S.step = n; PF.setStep(n); PF.game.award(S, "enter" + n, 20, "Step " + n + " begun"); return go("unitIntro", { u: 0, qi: 0, pi: 0, cur: null, lastRound: null }); }
+    if (act === "togate") return go("gate");
+    if (act === "fixstep") { const n = Number(d.n); S.step = n; PF.setStep(n); return go(n === 1 ? "results" : "missionSubmit"); }
     if (PF.missionUI && PF.missionUI.click && PF.missionUI.click(act, d, S, { go, save, render })) return;
   });
   function advanceUnit() { S.lastRound = PF.game.roundEnd(S, S.u); return go("roundEnd"); }
-  function afterRound() { if (S.u === 2) return go("verdict"); if (S.u + 1 < PF.UNITS.length) { S.u++; S.qi = 0; S.pi = 0; S.cur = null; return go("unitIntro"); } PF.game.award(S, "chapB", 60, "Chapter B cleared"); PF.game.checkBadges(S); return go("results"); }
+  function afterRound() { if (unit().after === "verdict") return go("verdict"); if (S.u + 1 < PF.UNITS.length) { S.u++; S.qi = 0; S.pi = 0; S.cur = null; return go("unitIntro"); } if ((S.step || 1) > 1) { PF.game.award(S, "step" + S.step + "done", 60, "Step " + S.step + " rounds cleared"); PF.game.checkBadges(S); return go("missionBrief"); } PF.game.award(S, "chapB", 60, "Chapter B cleared"); PF.game.checkBadges(S); return go("results"); }
 
 
   // ---------- demo routes: index.html#demo=results | q:price | mirror:3 | story:2 | rebuild | mission | submit | fail | pass ----------
@@ -347,7 +355,8 @@
     const raw = decodeURIComponent(m[1]), ci = raw.indexOf(":"), k = ci < 0 ? raw : raw.slice(0, ci), arg = ci < 0 ? "" : raw.slice(ci + 1); const P = PF.persona(); Object.assign(S, P);
     S.game = { xp: 700, coins: 175, once: {}, badges: [], streak: 2, best: 2, rounds: { 0: 3, 1: 2, 2: 3, 3: 2 }, sound: false, levelUp: null, celebrate: null };
     const unitOf = (id) => PF.UNITS.findIndex((u) => u.items.includes(id));
-    if (k === "results") { S.screen = "results"; S.u = PF.UNITS.length - 1; }
+    if (k === "step" && arg) { const ai = arg.indexOf(":"), n = Number(ai < 0 ? arg : arg.slice(0, ai)), what = ai < 0 ? "intro" : arg.slice(ai + 1); S.step = n; PF.setStep(n); PF.demoFill(S, 4); S.ms = S.ms || {}; S.u = 0; S.queue = {}; S.screen = "unitIntro"; if (what === "gate") { S.screen = "gate"; } else if (what === "mission") { S.screen = "missionBrief"; } else if (what.startsWith("q")) { const id = what.slice(2); S.u = PF.UNITS.findIndex((u) => u.items.includes(id)); S.screen = "q"; S.qi = Math.max(0, queue().indexOf(id)); } else if (what.startsWith("r")) { S.u = Number(what.slice(1)) - 1; S.screen = "story"; } }
+    else if (k === "results") { S.screen = "results"; S.u = PF.UNITS.length - 1; }
     else if (k === "verdict") { S.screen = "verdict"; S.u = 2; }
     else if (k === "roundend") { S.u = Number(arg || 1) - 1; S.lastRound = PF.game.roundEnd(S, S.u); S.screen = "roundEnd"; }
     else if (k === "levelup") { S.game.xp = 1410; S.game.levelUp = 3; S.screen = "results"; S.u = PF.UNITS.length - 1; }
@@ -365,7 +374,7 @@
   // test helper: answer the current screen with a random valid response
   PF.ui = {
     auto(max) {
-      for (let i = 0; i < (max || 400) && !["results", "rebuild", "missionBrief", "missionSubmit"].includes(S.screen); i++) {
+      for (let i = 0; i < (max || 400) && !["results", "rebuild", "missionBrief", "missionSubmit", "gate"].includes(S.screen); i++) {
         const r = PF.rng(PF.hash("auto" + i + S.screen + S.qi));
         const scr = S.screen;
         if (scr === "intro") { S.profile = { name: "Test Founder", startup: "TestCo" }; S.seed = 1234; go("daydream"); }

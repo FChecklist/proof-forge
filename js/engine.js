@@ -152,6 +152,7 @@
     const weak = ["onepct", "viral", "mktg", "solo", "slow", "nocopy", "freepay"].filter((x) => bel.includes(x)), bl = (x) => ((PF.BELIEFS || []).find((b) => b.v === x) || {}).label;
     if (weak.length >= 2) add("b1", 2, "Beliefs that often sink plans", "You ticked " + weak.length + " beliefs that often sink early plans: " + weak.map(bl).join("; ") + ".", ["beliefs"]);
     else if (weak.length === 1) add("b1", 1, "A belief to test", "You believe: " + bl(weak[0]) + ". Many plans that failed believed the same.", ["beliefs"]);
+    (PF.extraChecks || []).forEach((fn) => fn(S, add, v, has));
     return out;
   };
   PF.sameSet = (a, b) => Array.isArray(a) && a.length === b.length && b.every((x) => a.includes(x));

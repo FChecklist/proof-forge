@@ -50,16 +50,16 @@
   // ---------- stars and the end-of-round summary ----------
   const HONESTY = ["c1", "c1b", "g1", "g2", "g3", "c3", "c4", "c5", "c6", "c8", "c9", "c10", "c12", "c15", "c19"]; // answers that disagree: about honesty, not about how good the idea is
   G.roundEnd = (S, u) => {
-    const un = PF.UNITS[u], g = G.g(S);
+    const un = PF.UNITS[u], g = G.g(S), kk = (S.step || 1) + ":" + u;
     const flags = PF.checks(S).filter((c) => HONESTY.includes(c.id) && c.q.some((q) => un.items.includes(q)) && c.q.every((q) => S.ans[q]));
     const calc = 1 + (flags.length <= 1 ? 1 : 0) + (flags.length === 0 ? 1 : 0), parts = [];
     const add = (k, xp, label) => { const got = G.award(S, k, xp, label); if (got) parts.push({ xp: got, label }); };
-    if (g.rounds[u] === undefined) { g.rounds[u] = calc; g.streak = calc >= 2 ? g.streak + 1 : 0; g.best = Math.max(g.best, g.streak); }
-    const stars = g.rounds[u];
-    add("round:" + u, 25, "Round finished");
-    if (stars >= 2) add("star2:" + u, 15, "Answers agreed with each other");
-    if (stars === 3) add("star3:" + u, 20, "Perfect consistency");
-    if (g.streak >= 2) add("streak:" + u, 10 * Math.min(g.streak, 5), "Momentum x" + g.streak);
+    if (g.rounds[kk] === undefined) { g.rounds[kk] = calc; g.streak = calc >= 2 ? g.streak + 1 : 0; g.best = Math.max(g.best, g.streak); }
+    const stars = g.rounds[kk];
+    add("round:" + kk, 25, "Round finished");
+    if (stars >= 2) add("star2:" + kk, 15, "Answers agreed with each other");
+    if (stars === 3) add("star3:" + kk, 20, "Perfect consistency");
+    if (g.streak >= 2) add("streak:" + kk, 10 * Math.min(g.streak, 5), "Momentum x" + g.streak);
     G.checkBadges(S);
     return { u, stars, parts, flags: flags.length, streak: g.streak };
   };

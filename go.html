@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex"><title>Early access</title><link rel="stylesheet" href="style.css"></head>
+<body><header class="top"><div class="wrap in"><span class="brand"><span class="mark"><svg viewBox="-20 -20 40 40" width="28" height="28" aria-hidden="true"><circle r="17" fill="#FFD23F" stroke="#B45309" stroke-width="2"/><text y="7" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="20" fill="#7C2D12">&#8377;</text></svg></span><span>Early access<small id="sub"></small></span></span></div></header>
+<main class="wrap main" id="w"></main>
+<script src="js/engine.js"></script>
+<script>
+(function () {
+  const q = new URLSearchParams(location.search), t = q.get("t"), who = q.get("n") || "a student founder", what = q.get("u") || "a new idea", price = Number(q.get("p") || 0);
+  const el = document.getElementById("w"), key = "pf-go-" + t, dev = PF.deviceId();
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+  const read = () => { try { return JSON.parse(localStorage.getItem(key)) || { visits: {}, signups: [], preorders: [] }; } catch (e) { return { visits: {}, signups: [], preorders: [] }; } };
+  const write = (g) => localStorage.setItem(key, JSON.stringify(g));
+  document.getElementById("sub").textContent = what;
+  if (t) { const g = read(); g.visits[dev] = g.visits[dev] || Date.now(); write(g); }
+  let rel = null, done = null;
+  function draw() {
+    if (!t) { el.innerHTML = '<section class="center"><h1>This link is not valid.</h1></section>'; return; }
+    if (done) { el.innerHTML = '<section class="center"><h1>Thank you.</h1><p class="lead">' + (done === "pre" ? "Your pre-order is noted." : "You are on the list.") + "</p></section>"; return; }
+    const chips = [["stranger", "I do not know them"], ["friend", "Friend"], ["family", "Family"], ["classmate", "Classmate"]].map((x) => '<button class="chip ' + (rel === x[0] ? "on" : "") + '" data-r="' + x[0] + '">' + x[1] + "</button>").join("");
+    el.innerHTML = '<section><p class="eyebrow">Early access</p><h1>' + esc(what) + '</h1><p class="lead">' + esc(who) + " is building this and wants to know if you would use it. Join the list, or reserve yours.</p>"
+      + '<div class="card"><h2>How do you know ' + esc(who) + '?</h2><div class="chips">' + chips + "</div></div>"
+      + '<div class="chips"><button class="btn" id="su" ' + (rel ? "" : "disabled") + ">Join the waiting list</button>" + (price ? '<button class="btn ghost" id="pre" ' + (rel ? "" : "disabled") + ">Pre-order for ₹" + price.toLocaleString("en-IN") + " (demo: no payment)</button>" : "") + '</div><p class="small">Prototype page. In the real product a pre-order takes a real deposit.</p></section>';
+    el.querySelectorAll("[data-r]").forEach((b) => (b.onclick = () => { rel = b.dataset.r; draw(); }));
+    const go = (k, list) => { const g = read(); g[list].push({ rel, device: dev, at: Date.now() }); write(g); done = k; draw(); };
+    const su = document.getElementById("su"); if (su) su.onclick = () => go("su", "signups");
+    const pre = document.getElementById("pre"); if (pre) pre.onclick = () => go("pre", "preorders");
+  }
+  draw();
+})();
+</script></body></html>

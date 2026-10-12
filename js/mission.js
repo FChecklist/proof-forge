@@ -47,7 +47,7 @@
 
   function chips(list, cur, act, key) { return `<div class="chips">${list.map((x) => `<button class="chip ${String(cur) === String(Array.isArray(x) ? x[0] : x) ? "on" : ""}" data-act="${act}" data-k="${key}" data-v="${Array.isArray(x) ? x[0] : x}">${e(Array.isArray(x) ? x[1] : (key === "buy" || key === "sell" ? money(x) : x))}</button>`).join("")}</div>`; }
 
-  PF.missionUI = {
+  const M1 = {
     evaluate,
     brief(S) {
       const pr = predicted(S), f = PF.flow(S);
@@ -73,7 +73,7 @@
       const m = M(S), v = m.verdict; if (!v) return "<p>No result yet.</p>";
       const g = v.gapMsg;
       const gap = g ? `<div class="card"><h2>Prediction against reality</h2><div class="cmp"><div><h3>You predicted</h3><p>Cycle <b>${g.predDays} days</b></p><p>Gain <b>${g.predPct}%</b></p></div><div class="bad"><h3>What happened</h3><p>Cycle <b>${g.actDays} days</b></p><p>Gain <b>${g.actPct}%</b></p></div></div><p class="note">${v.bigGap ? "Your real numbers are far from your prediction. That is the daydream meeting the field. Update your Money Flow Sheet with these real numbers before Session 2." : "Your real numbers are close to your prediction. Good model. Step 2 tests whether customers outside your circle behave the same way."}</p></div>` : "";
-      if (v.ok) return `<section class="center"><p class="eyebrow">Mission 1 · checked</p><h1>Proof accepted</h1><div class="card cele"><div class="cele-ico">🏆</div><div><h3>Gate to Step 2: OPEN</h3><p class="small">+150 XP · Level ${PF.game.level(PF.game.g(S).xp).n}: ${e(PF.game.level(PF.game.g(S).xp).name)} · ${PF.game.g(S).xp} XP in total</p></div></div><div class="card ok"><h2>What passed</h2><ul class="ded">${v.pass.map((p) => `<li><span>✓ ${e(p)}</span></li>`).join("")}</ul></div>${gap}<div class="card locked open"><h2>Step 2: Customer truth</h2><p>Unlocked.</p></div><button class="btn" data-act="mreview">Edit my proof</button></section>`;
+      if (v.ok) return `<section class="center"><p class="eyebrow">Mission 1 · checked</p><h1>Proof accepted</h1><div class="card cele"><div class="cele-ico">🏆</div><div><h3>Gate to Step 2: OPEN</h3><p class="small">+150 XP · Level ${PF.game.level(PF.game.g(S).xp).n}: ${e(PF.game.level(PF.game.g(S).xp).name)} · ${PF.game.g(S).xp} XP in total</p></div></div><div class="card ok"><h2>What passed</h2><ul class="ded">${v.pass.map((p) => `<li><span>✓ ${e(p)}</span></li>`).join("")}</ul></div>${gap}<div class="card locked open"><h2>Step 2: Customer truth</h2><p>Unlocked.</p></div><button class="btn" data-act="nextstep">Begin Step 2</button> <button class="btn ghost" data-act="mreview">Edit my proof</button></section>`;
       return `<section><p class="eyebrow">Mission 1 · checked</p><h1>Not accepted yet</h1><div class="card no"><h2>Gate to Step 2: LOCKED</h2><p>${v.fails.length} thing(s) to fix. Fix them and submit again.</p><ul class="fails">${v.fails.map((x) => `<li><b>${e(x.t)}</b><span>Next step: ${e(x.fix)}</span></li>`).join("")}</ul></div>${gap}<div class="card locked"><h2>Step 2: Customer truth</h2><p>Locked until the proof passes.</p></div><button class="btn" data-act="mreview">Fix and resubmit</button></section>`;
     },
     click(act, d, S, h) {
@@ -104,5 +104,6 @@
       const same = document.getElementById("msame"); if (same) same.onchange = () => { M(S).allowSame = same.checked; PF.store.save(S); PF.ui.render(); };
     },
   };
+  (PF.missions = PF.missions || {})[1] = M1;
   window.addEventListener("storage", () => { const S = PF.getState && PF.getState(); if (S && S.screen === "missionSubmit") PF.ui.render(); });
 })();
