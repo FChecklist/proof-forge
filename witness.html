@@ -10,6 +10,7 @@
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
   const inr = (n) => "₹" + Number(n).toLocaleString("en-IN");
   let a = {};
+  const numIn = (k, ph, neg) => '<input type="number" inputmode="numeric" ' + (neg ? "" : 'min="0" ') + 'data-n="' + k + '" placeholder="' + ph + '" value="' + (a[k] === undefined ? "" : a[k]) + '" style="width:100%;padding:12px;font-size:18px;border:1px solid #cbd5e1;border-radius:10px">';
   const ch = (k, list) => '<div class="chips">' + list.map((x) => '<button class="chip ' + (a[k] === x[0] ? "on" : "") + '" data-k="' + k + '" data-v="' + x[0] + '">' + esc(x[1]) + "</button>").join("") + "</div>";
   const REL = [["stranger", "I did not know them before"], ["friend", "Friend"], ["family", "Family"], ["classmate", "Classmate or colleague"]];
   function view() {
@@ -73,11 +74,28 @@
         + "<h2>Are they in order?</h2>" + ch("order", [["yes", "Yes"], ["fix", "Some need fixing"], ["no", "No"]]) + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answers</button></section>";
     }
     if (kind === "funder") {
-      const ok = a.rel && a.stage && a.amt;
-      return '<section><p class="eyebrow">30 seconds, please</p><h1>Confirm your support for ' + esc(who) + ".</h1><p class=\"small\">Business: " + esc(what) + ". Only your taps are recorded.</p>"
+      const ok = a.rel && a.stage && Number(a.amt) > 0 && a.know;
+      return '<section><p class="eyebrow">30 seconds, please</p><h1>Confirm your support for ' + esc(who) + ".</h1><p class=\"small\">Business: " + esc(what) + ". Only your taps and the amount are recorded.</p>"
         + '<div class="card"><h2>Who are you?</h2>' + ch("rel", [["investor", "An investor"], ["programme", "A funding programme"], ["bank", "A bank or lender"], ["other", "Someone else"]])
-        + "<h2>Where are you with them?</h2>" + ch("stage", [["verbal", "I said yes in words only"], ["signed", "We signed an agreement"], ["received", "The money has been sent"]])
-        + "<h2>How much?</h2>" + ch("amt", [["25", "Up to a quarter of their ask"], ["50", "About half"], ["75", "Most of it"], ["100", "All of it or more"]]) + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answers</button></section>";
+        + "<h2>How do you know them?</h2>" + ch("know", [["stranger", "I did not know them before"], ["friend", "Friend"], ["family", "Family"], ["colleague", "Classmate or colleague"], ["self", "I am a founder or co-founder of this business"]])
+        + "<h2>Where are you with them?</h2>" + ch("stage", [["verbal", "I said yes in words only"], ["signed", "We signed an agreement"], ["received", "The money has been sent to their bank account"]])
+        + "<h2>How much, in rupees?</h2>" + numIn("amt", "e.g. 750000") + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answers</button></section>";
+    }
+    if (kind === "sales") {
+      const ok = a.role && a.amt && Number(a.amt) > 0 && a.checked && a.conc && a.relshare;
+      return '<section><p class="eyebrow">1 minute, please</p><h1>Confirm the sales of ' + esc(what) + " for the latest 30 days.</h1><p class=\"small\">Only your taps and the amount are recorded. This is a record of what you checked.</p>"
+        + '<div class="card"><h2>Who are you?</h2>' + ch("role", [["ca", "Chartered accountant"], ["accountant", "Accountant or bookkeeper"], ["other", "Someone else"]])
+        + "<h2>What did you check?</h2>" + ch("checked", [["all", "The ledger and the bank statement"], ["part", "A sample"], ["none", "Nothing, I am going by what they told me"]])
+        + "<h2>Sales received in the 30 days, in rupees</h2>" + numIn("amt", "e.g. 300000")
+        + "<h2>Share of sales from their single biggest customer</h2>" + ch("conc", [["lt20", "Under 20%"], ["lt40", "20% to 40%"], ["gt40", "Over 40%"]])
+        + "<h2>Share of sales from friends and family</h2>" + ch("relshare", [["lt30", "Under 30%"], ["lt50", "30% to 50%"], ["gt50", "Over 50%"]]) + '</div><button class="btn" id="go" ' + (ok && a.checked !== "none" ? "" : "disabled") + ">Send my answers</button></section>";
+    }
+    if (kind === "pnl") {
+      const ok = a.role && a.sales && Number(a.sales) > 0 && a.profit !== undefined && a.profit !== "" && a.all;
+      return '<section><p class="eyebrow">1 minute, please</p><h1>State the sales and profit of ' + esc(what) + " for the latest 30 days.</h1><p class=\"small\">Only your taps and the amounts are recorded.</p>"
+        + '<div class="card"><h2>Who are you?</h2>' + ch("role", [["ca", "Chartered accountant"], ["accountant", "Accountant or bookkeeper"], ["other", "Someone else"]])
+        + "<h2>Sales received, in rupees</h2>" + numIn("sales", "e.g. 300000") + "<h2>Net profit after all costs, in rupees (a loss is negative)</h2>" + numIn("profit", "e.g. 60000", true)
+        + "<h2>Are goods, staff, rent, fees, returns, tax and interest all counted?</h2>" + ch("all", [["yes", "Yes, all of them"], ["part", "Some are missing"], ["no", "No"]]) + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answers</button></section>";
     }
     if (kind === "operator") {
       const ok = a.answer && (a.answer === "no" || a.hours);
@@ -92,6 +110,7 @@
       + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answer</button></section>";
   }
   function draw() { el.innerHTML = view(); const g = document.getElementById("go"); if (g) g.onclick = () => { localStorage.setItem(key, JSON.stringify(Object.assign({ k: kind, at: Date.now(), device: PF.deviceId() }, a))); draw(); }; }
+  el.addEventListener("change", (ev) => { const n = ev.target.closest("[data-n]"); if (!n) return; a[n.dataset.n] = n.value; draw(); });
   el.addEventListener("click", (ev) => { const b = ev.target.closest("[data-k]"); if (!b) return; a[b.dataset.k] = b.dataset.v; draw(); });
   draw();
 })();
