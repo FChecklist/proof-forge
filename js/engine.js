@@ -137,6 +137,10 @@
     const pk = v("paidKnow");
     if (["paid", "mixed"].includes(pt) && ["none", "unknown"].includes(pk)) add("c12", 2, "Someone pays? You know nobody who does", "You said people already pay for something, but you do not know a single person who spent money on it in the last 6 months.", ["pToday", "paidKnow"]);
     if (v("payGut") === true && ["none", "unknown"].includes(pk)) add("g3", 1, "Gut and reason disagree", "Your fast answer said people already spend money on this. After thinking, you know nobody who did.", ["payGut", "paidKnow"]);
+    const wd = v("whoDecides"), pn = v("payerKnown");
+    if (["parents", "business", "ads"].includes(wp) && ["no", "who"].includes(pn)) add("c18", 2, "You have not met the person who pays", "You said someone other than the user pays, and you have not spoken to them. Talking only to users cannot validate demand.", ["whoPays", "payerKnown"]);
+    if (wp === "users" && ["other", "committee"].includes(wd)) add("c19", 2, "Users pay, but someone else decides", "You said the users pay, yet you also said someone else decides to buy. Which of them is your real customer?", ["whoPays", "whoDecides"]);
+    if (wp === "users" && v("payerSelf") === false) add("c19", 2, "Users pay, but not from their own pocket", "You said users pay, yet you also said they would not pay from their own pocket.", ["whoPays", "payerSelf"]);
     const lim = { tiny: 1, small: 3, medium: 4, big: 5 }[pc];
     if (has("priceSense") && lim !== undefined && v("priceSense") > lim) add("c17", 2, "You expect more than the problem costs", "You expect people to pay more than the problem costs them each time it happens.", ["priceSense", "pCost"]);
     if (v("burnPlan") === "deep" || bel.includes("burn")) add("c14", 2, "Winning customers with deep discounts", "Deep discounts burn cash, and they only pay off if customers stay after the discount ends. The big names could afford it. Can you?", [v("burnPlan") === "deep" ? "burnPlan" : "beliefs"]);
@@ -166,12 +170,12 @@
       return { ...a, label, tag: (S.tags || {})[a.id] || null };
     });
     const total = list.reduce((s, a) => s + a.imp, 0);
-    const guess = list.reduce((s, a) => s + (a.tag === "tested" || a.tag === "asked" ? 0 : a.imp), 0);
-    const tested = list.reduce((s, a) => s + (a.tag === "tested" ? a.imp : a.tag === "asked" ? a.imp * 0.5 : 0), 0);
+    const guess = list.reduce((s, a) => s + (["tested", "asked", "paid"].includes(a.tag) ? 0 : a.imp), 0);
+    const tested = list.reduce((s, a) => s + (a.tag === "paid" ? a.imp : a.tag === "tested" ? a.imp * 0.85 : a.tag === "asked" ? a.imp * 0.4 : 0), 0);
     return { list, total, pctGuess: Math.round((guess / total) * 100), pctTested: Math.round((tested / total) * 100) };
   };
 
-  PF.IDEA_IDS = ["c1", "c1b", "g1", "g3", "c2", "c7", "c7b", "c11", "c11a", "c11b", "c12", "c13", "c13b", "c14", "c15", "c16", "c16b", "c17", "b1", "p1", "p2", "p3", "p4", "p5", "p6"];
+  PF.IDEA_IDS = ["c1", "c1b", "g1", "g3", "c2", "c7", "c7b", "c11", "c11a", "c11b", "c12", "c13", "c13b", "c14", "c15", "c16", "c16b", "c17", "c18", "c19", "b1", "p1", "p2", "p3", "p4", "p5", "p6"];
   PF.verdict = (S) => {
     const ch = PF.checks(S).filter((c) => PF.IDEA_IDS.includes(c.id));
     const pts = ch.reduce((a, c) => a + c.sev, 0);

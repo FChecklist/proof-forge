@@ -23,14 +23,17 @@
   const optsFor = (id) => { const it = PF.ITEMS[id], base = it.optsFn ? it.optsFn(S) : it.opts; if (!base || it.ord || it.fmt === "pair" || it.fmt === "reflex" || it.fmt === "tf") return base; const keep = base.filter((o) => o.v === it.excl), rest = base.filter((o) => o.v !== it.excl); return PF.shuffle(rest, PF.rng(S.seed + PF.hash(id))).concat(keep); };
   const clock = () => { if (!S.t0) return "00:00"; const s = Math.floor((Date.now() - S.t0) / 1000); return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); };
   const money = (n) => PF.inr(n);
+  const FLOWER = `<svg viewBox="-20 -20 40 40" width="26" height="26" aria-hidden="true"><g fill="#FF3D8B">${[0, 72, 144, 216, 288].map((a) => `<ellipse cx="0" cy="-9" rx="6.5" ry="9.5" transform="rotate(${a})"/>`).join("")}</g><circle r="6" fill="#FFD23F"/></svg>`;
+  const themeOf = () => (["missionBrief", "missionSubmit", "missionVerdict"].includes(S.screen) ? "m" : ["intro", "daydream", "verdict"].includes(S.screen) ? "a" : ["unitIntro", "prelude", "q", "story", "mirror"].includes(S.screen) ? (S.u <= 2 ? "a" : "b") : "b");
 
   // ---------- chrome ----------
   function topbar() {
     const dots = PF.UNITS.map((u, i) => `<i class="dot ${i < S.u ? "done" : i === S.u && ["unitIntro", "prelude", "q", "story", "mirror", "verdict"].includes(S.screen) ? "now" : ""}" title="Unit ${i + 1}: ${e(u.title)}"></i>`).join("");
-    return `<header class="top"><div class="wrap in"><a class="brand" href="#" data-act="home"><span class="mark">PF</span><span>Proof Forge<small>Step 1 · The idea on trial</small></span></a><div class="dots" aria-label="Units">${dots}</div><div class="meta"><button class="mini" data-act="reset" title="Start over (clears this browser)">Reset</button></div></div></header>`;
+    return `<header class="top"><div class="wrap in"><a class="brand" href="#" data-act="home"><span class="mark">${FLOWER}</span><span>Proof Forge<small>Step 1 · The idea on trial</small></span></a><div class="dots" aria-label="Units">${dots}</div><div class="meta"><button class="mini" data-act="reset" title="Start over (clears this browser)">Reset</button></div></div></header>`;
   }
   function render() {
     const fn = SCREENS[S.screen] || SCREENS.intro;
+    $app.dataset.theme = themeOf();
     $app.innerHTML = topbar() + `<main class="wrap main" id="main">${fn()}</main>`;
     afterRender();
   }
@@ -174,10 +177,10 @@
   function ledgerScreen(head, why) {
     const c = PF.castle(S), n = shapeOf();
     const show = (id) => { const v = PF.val(S, id); const sf = PF.val(S, "cut"); if (v === undefined && id !== "cost") return "not answered"; if (id === "cost") return n.cut ? PF.num(sf, 0) + "% cut" : money(v); if (["price", "cac"].includes(id)) return money(v); if (id === "volume") return Number(v).toLocaleString("en-IN") + " a month"; if (id === "custFreq") return PF.freqLabel(v); if (id === "supTerms") return v < 0 ? "advance" : v + " days"; if (id === "recvDays") return v + " days"; if (id === "sellThrough") return v + "%"; return String(v); };
-    return `<section>${head}<h1 class="qtext">How do you know each number in your plan?</h1><div class="ledger">${c.list.map((a) => `<div class="lrow"><div><b>${e(a.label)}</b><span>${e(show(a.id))}</span></div><div class="chips">${[["guess", "I guessed"], ["asked", "I asked a few people"], ["tested", "I have a receipt or data"]].map((o) => `<button class="chip ${a.tag === o[0] ? "on" : ""} ${o[0]}" data-act="tag" data-id="${a.id}" data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`).join("")}</div>${castleHTML(c)}<button class="btn" data-act="ledgerdone" ${c.list.every((a) => a.tag) ? "" : "disabled"}>Done</button>${why}</section>`;
+    return `<section>${head}<h1 class="qtext">How do you know each number in your plan?</h1><div class="ledger">${c.list.map((a) => `<div class="lrow"><div><b>${e(a.label)}</b><span>${e(show(a.id))}</span></div><div class="chips">${[["guess", "I guessed"], ["asked", "I asked a few people"], ["tested", "I have data or a receipt"], ["paid", "Someone has paid me"]].map((o) => `<button class="chip ${a.tag === o[0] ? "on" : ""} ${o[0]}" data-act="tag" data-id="${a.id}" data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`).join("")}</div>${castleHTML(c)}<button class="btn" data-act="ledgerdone" ${c.list.every((a) => a.tag) ? "" : "disabled"}>Done</button>${why}</section>`;
   }
   function castleHTML(c) {
-    return `<div class="castle" aria-label="Castle meter"><div class="tower">${c.list.map((a) => `<div class="blk ${a.tag || "none"}"><span>${e(a.label)}</span></div>`).join("")}</div><div class="cinfo"><b>${c.pctGuess}%</b><span>of your plan floats on guesses</span><em>Solid blocks are tested. Dashed blocks float in the air.</em></div></div>`;
+    return `<div class="castle" aria-label="Castle meter"><div class="tower">${c.list.map((a) => `<div class="blk ${a.tag || "none"}"><span>${e(a.label)}</span></div>`).join("")}</div><div class="cinfo"><b>${c.pctGuess}%</b><span>of your plan floats on guesses</span><em>Solid blocks are checked. Dashed blocks float in the air.</em></div></div>`;
   }
 
   function firstNumberCard(f) {
@@ -242,6 +245,8 @@
   FIXES.p5 = ["Pick one campus, street or market to start", "List the first 50 people you could reach in person", "Prove it works in one place before you grow"];
   FIXES.p6 = ["Rewrite your problem so it does not mention your product", "Ask 'what would this person say they struggle with?'", "Remove words like app, platform or AI from your problem"];
   FIXES.c17 = ["Ask 5 people what they would pay, and what they pay today", "Lower your price expectation to the cost of the problem", "Find a bigger cost to solve"];
+  FIXES.c18 = ["Find and talk to 3 real payers this week, not users, and ask what they would pay and who decides", "Ask each user who pays for things like this today, then go and meet that person", "Write down who uses, who decides and who pays, and test each one separately"];
+  FIXES.c19 = ["Decide who your real customer is: the person who decides and pays", "Ask 5 users 'who approves this purchase?' and note every answer", "Test the idea with the payer first, and the user second"];
   const NEWDIR = ["Narrow to one small group of customers who clearly pay", "Pick a different problem you have personally lived and paid to solve", "Keep the idea, but find 10 people who will pay before you build anything"];
   const alias = { c7b: "c7", c1b: "c1", g1: "c1", g2: "c5", g3: "c12", c11a: "c11", c11b: "c11", c13b: "c13", c16b: "c16" };
   function flagsToFix(scope) {
