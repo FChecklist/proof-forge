@@ -20,5 +20,6 @@ export async function onRequestPut({ request, env, params }) {
   const h = await sha(secret), cur = await env.DB.prepare("SELECT secret_hash FROM vault WHERE id = ?").bind(params.id).first();
   if (cur && cur.secret_hash !== h) return json({ error: "wrong secret" }, 403);
   await env.DB.prepare("INSERT INTO vault (id, secret_hash, meta, blob, at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET meta = excluded.meta, blob = excluded.blob, at = excluded.at").bind(params.id, h, JSON.stringify(b.meta), b.blob, Date.now()).run();
+  await logEvent(env, request, "vault_save", params.id);
   return json({ ok: true });
 }

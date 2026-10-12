@@ -24,3 +24,8 @@ Rejected: "get it back as you earn it" (flat), "Make it work, and it's free" (va
 - At claim time the founder locks their bundle to the audit team's public key (RSA-OAEP + AES-GCM). Generate the pair with tools/gen-audit-key.cjs; the private key stays offline.
 - Free only: Cloudflare Pages + Functions + D1. No R2 (may need a card), so bank statements and papers are not stored by us; the founder sends them with the audit pack.
 - Not deployed. To deploy: create the D1 database, run migrations/0001_init.sql, bind it as DB, set PF.CONFIG.cloud = true and PF.CONFIG.auditKey.
+
+## Versioning, tamper evidence and our records (2026-10-12)
+- Every release has a version (file VERSION + git commit). `node tools/build-dist.cjs` fingerprints every shipped file (SHA-256) into version.json and signs it with the RELEASE key (private key at C:\Users\Dell\Documents\proof-forge-RELEASE-PRIVATE-KEY.jwk, offline, owner-held; public key release-public-key.json).
+- Inside the page, js/integrity.js checks the signature and every file before it asks for a passphrase; on a mismatch it shows a stop screen. Swapped code could skip that, so the real defence is OUTSIDE: `node tools/verify-live.cjs <site>` uses the public key in this repo and exits 1 on any change. Schedule it (hourly) from somewhere we control; any failure means act at once and rotate the Cloudflare token.
+- Our records (D1 audit_log, hash-chained so an edited or removed row is detected): time, event (vault_open, vault_save, answer, visitor), vault id, browser id (random, made by the browser; NOT a hardware id, which websites cannot and should not read), software version, salted address hash. Never content. State this in the privacy notice.

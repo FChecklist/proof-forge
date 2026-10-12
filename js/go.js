@@ -6,7 +6,7 @@
   const write = (g) => localStorage.setItem(key, JSON.stringify(g));
   document.getElementById("sub").textContent = what;
   const K = PF.wc.keyFromHash(), cloud = PF.CONFIG.cloud && location.protocol !== "file:" && !!K;
-  const post = (e) => PF.wc.seal(e, K).then((c) => fetch("/api/g/" + t, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ c }) })).then((r) => { if (!r.ok) throw new Error("x"); });
+  const post = (e) => PF.wc.seal(e, K).then((c) => fetch("/api/g/" + t, { method: "POST", headers: Object.assign({ "content-type": "application/json" }, PF.hdr()), body: JSON.stringify({ c }) })).then((r) => { if (!r.ok) throw new Error("x"); });
   if (t && cloud) { if (!localStorage.getItem("pf-gvis-" + t)) post({ t: "visit", device: dev, at: Date.now() }).then(() => localStorage.setItem("pf-gvis-" + t, "1")).catch(() => {}); }
   else if (t) { const g = read(); g.visits[dev] = g.visits[dev] || Date.now(); write(g); }
   let rel = null, done = null;

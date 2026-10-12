@@ -106,7 +106,7 @@
   function draw() { el.innerHTML = view(); const g = document.getElementById("go"); if (g) g.onclick = () => { const rec = Object.assign({ k: kind, at: Date.now(), device: PF.deviceId() }, a), K = PF.wc.keyFromHash();
     if (PF.CONFIG.cloud && location.protocol !== "file:" && K) {
       g.disabled = true;
-      PF.wc.seal(rec, K).then((c) => fetch("/api/w/" + t, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ c }) }))
+      PF.wc.seal(rec, K).then((c) => fetch("/api/w/" + t, { method: "POST", headers: Object.assign({ "content-type": "application/json" }, PF.hdr()), body: JSON.stringify({ c }) }))
         .then((r) => { if (r.ok || r.status === 409) { localStorage.setItem("pf-wdone-" + t, "1"); draw(); } else { g.disabled = false; alert("Could not send. Please try again."); } })
         .catch(() => { g.disabled = false; alert("Could not send. Check your connection and try again."); });
     } else { localStorage.setItem(key, JSON.stringify(rec)); draw(); } };

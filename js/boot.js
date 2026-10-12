@@ -26,5 +26,9 @@
     document.getElementById("un").onclick = go; document.getElementById("p1").onkeydown = (ev) => { if (ev.key === "Enter") go(); };
     const nw = document.getElementById("nw"); if (nw) nw.onclick = (ev) => { ev.preventDefault(); createView(); };
   }
-  if ((PF.CONFIG.demo && /demo=/.test(location.hash)) || !window.crypto || !crypto.subtle) start(); else if (V.exists()) unlockView(); else createView();
+  function tamperView(r) { shell('<p class="eyebrow">Stop</p><h1>This copy does not match our published release</h1><p class="lead">Do not enter your passphrase here. Close this page and open Proof Forge from the address we gave you. If the problem stays, tell us. (' + e(r.why || "") + ")</p>"); }
+  const go = () => { if (V.exists()) unlockView(); else createView(); };
+  if ((PF.CONFIG.demo && /demo=/.test(location.hash)) || !window.crypto || !crypto.subtle) start();
+  else if (!cloud) go();
+  else { shell('<p class="lead">Checking that this is our genuine release…</p>'); PF.integrity.check().then((r) => { if (!r.ok) return tamperView(r); PF.verified = r.version || null; go(); }); }
 })();

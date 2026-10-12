@@ -38,7 +38,7 @@
   V.unlock = async (idOrNull, pass, byCode) => {
     let blob;
     if (cloud()) {
-      const id = (idOrNull || "").trim(), r = await fetch("/api/v/" + encodeURIComponent(id)); if (!r.ok) throw new Error("not found");
+      const id = (idOrNull || "").trim(), r = await fetch("/api/v/" + encodeURIComponent(id), { headers: PF.hdr() }); if (!r.ok) throw new Error("not found");
       const j = await r.json(); meta = Object.assign(j.meta, { id }); blob = j.blob;
     } else { meta = JSON.parse(localStorage.getItem(META)); if (!meta) throw new Error("No vault on this device."); blob = localStorage.getItem(DATA); }
     key = await unwrap(byCode ? meta.rec : meta.pass, byCode ? pass.replace(/-/g, "").toUpperCase() : pass, meta.iter);
@@ -54,7 +54,7 @@
     if (!cloud()) { if (blob === null) localStorage.removeItem(DATA); else localStorage.setItem(DATA, blob); return; }
     if (blob === null) return;
     const m = { v: meta.v, iter: meta.iter, pass: meta.pass, rec: meta.rec };
-    const r = await fetch("/api/v/" + meta.id, { method: "PUT", headers: { "x-write": secret, "content-type": "application/json" }, body: JSON.stringify({ meta: m, blob }), keepalive: blob.length < 60000 });
+    const r = await fetch("/api/v/" + meta.id, { method: "PUT", headers: Object.assign({ "x-write": secret, "content-type": "application/json" }, PF.hdr()), body: JSON.stringify({ meta: m, blob }), keepalive: blob.length < 60000 });
     if (!r.ok) throw new Error("save failed " + r.status);
   };
   const banner = (on) => { let b = document.getElementById("pf-save-warn"); if (on && !b) { b = document.createElement("div"); b.id = "pf-save-warn"; b.setAttribute("role", "alert"); b.style.cssText = "position:fixed;bottom:0;left:0;right:0;background:#B91C1C;color:#fff;padding:10px;text-align:center;z-index:99"; b.textContent = "Could not save to our storage. Your work is safe in this window; keep it open. Retrying."; document.body.appendChild(b); } else if (!on && b) b.remove(); };

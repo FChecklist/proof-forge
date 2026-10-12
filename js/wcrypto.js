@@ -14,5 +14,6 @@
   };
   // the founder's side: one key per link, remembered in the (encrypted) state
   PF.wkey = (S, t) => { S.wkeys = S.wkeys || {}; if (!S.wkeys[t]) { S.wkeys[t] = PF.wc.newKey(); try { PF.store.save(S); } catch (e) { /* ignore */ } } return S.wkeys[t]; };
+  PF.hdr = () => ({ "x-pf-version": (PF.CONFIG && PF.CONFIG.version) || "dev", "x-pf-device": PF.deviceId ? PF.deviceId() : "none" });
   PF.wsuffix = (S, t) => "#k=" + PF.wkey(S, t);
 })();

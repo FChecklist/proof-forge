@@ -34,4 +34,10 @@ assert.equal((await (await Vt.onRequestGet({ request: mk("/api/v/" + id, "GET"),
 // rate limit
 let last = 0; for (let i = 0; i < 125; i++) last = (await post("wlimit" + String(i).padStart(6, "0"), seal("r" + i))).status;
 assert.equal(last, 429, "a flood from one address is stopped");
+import { verifyChain } from "../functions/api/_lib.js";
+assert.ok(DB.t.log.length >= 5, "events are logged");
+assert.ok(DB.t.log.some((r) => r.event === "vault_save" && r.ref === id), "vault saves are logged with the vault id");
+assert.ok(!JSON.stringify(DB.t.log).includes("1.2.3.4"), "no raw address in the log");
+assert.equal(await verifyChain(DB.t.log), true, "the log chain verifies");
+DB.t.log[2].event = "edited"; assert.equal(await verifyChain(DB.t.log), false, "editing an old log row is detected");
 console.log("server tests: all passed");
