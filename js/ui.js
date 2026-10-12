@@ -20,14 +20,14 @@
   }
   const queue = () => { if (!S.queue[S.u]) S.queue[S.u] = buildQueue(S.u); return S.queue[S.u]; };
   const curId = () => queue()[S.qi];
-  const optsFor = (id) => { const it = PF.ITEMS[id]; if (!it.opts || it.ord || it.fmt === "pair" || it.fmt === "reflex" || it.fmt === "tf") return it.opts; const keep = it.opts.filter((o) => o.v === it.excl), rest = it.opts.filter((o) => o.v !== it.excl); return PF.shuffle(rest, PF.rng(S.seed + PF.hash(id))).concat(keep); };
+  const optsFor = (id) => { const it = PF.ITEMS[id], base = it.optsFn ? it.optsFn(S) : it.opts; if (!base || it.ord || it.fmt === "pair" || it.fmt === "reflex" || it.fmt === "tf") return base; const keep = base.filter((o) => o.v === it.excl), rest = base.filter((o) => o.v !== it.excl); return PF.shuffle(rest, PF.rng(S.seed + PF.hash(id))).concat(keep); };
   const clock = () => { if (!S.t0) return "00:00"; const s = Math.floor((Date.now() - S.t0) / 1000); return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0"); };
   const money = (n) => PF.inr(n);
 
   // ---------- chrome ----------
   function topbar() {
-    const dots = PF.UNITS.map((u, i) => `<i class="dot ${i < S.u ? "done" : i === S.u && ["unitIntro", "prelude", "q", "story", "mirror"].includes(S.screen) ? "now" : ""}" title="Unit ${i + 1}: ${e(u.title)}"></i>`).join("");
-    return `<header class="top"><div class="wrap in"><a class="brand" href="#" data-act="home"><span class="mark">PF</span><span>Proof Forge<small>Step 1: Your ₹1 cycle</small></span></a><div class="dots" aria-label="Units">${dots}</div><div class="meta"><span id="clock" title="Session clock">${clock()}</span><button class="mini" data-act="reset" title="Start over (clears this browser)">Reset</button></div></div></header>`;
+    const dots = PF.UNITS.map((u, i) => `<i class="dot ${i < S.u ? "done" : i === S.u && ["unitIntro", "prelude", "q", "story", "mirror", "verdict"].includes(S.screen) ? "now" : ""}" title="Unit ${i + 1}: ${e(u.title)}"></i>`).join("");
+    return `<header class="top"><div class="wrap in"><a class="brand" href="#" data-act="home"><span class="mark">PF</span><span>Proof Forge<small>Step 1 · The idea on trial</small></span></a><div class="dots" aria-label="Units">${dots}</div><div class="meta"><button class="mini" data-act="reset" title="Start over (clears this browser)">Reset</button></div></div></header>`;
   }
   function render() {
     const fn = SCREENS[S.screen] || SCREENS.intro;
@@ -44,7 +44,6 @@
     }
     if (S.screen === "missionSubmit" && PF.missionUI) PF.missionUI.after();
   }
-  setInterval(() => { const c = document.getElementById("clock"); if (c) c.textContent = clock(); }, 1000);
 
   // ---------- recording answers ----------
   function answer(id, v, extra) {
@@ -100,12 +99,12 @@
   // ---------- screens ----------
   const SCREENS = {
     intro() {
-      return `<section class="hero2"><p class="eyebrow">Proof Forge · Step 1 of 12</p><h1>Your ₹1 cycle</h1><p class="lead">Find out exactly how money will move through your idea, from first rupee in to last rupee out. Tap to answer. Nothing to type except your name.</p>
+      return `<section class="hero2"><p class="eyebrow">Proof Forge · Step 1 of 12</p><h1>Your idea on trial</h1><p class="lead">First we question the idea itself. Then we follow your money, rupee by rupee, from first rupee in to last rupee out. Tap to answer. Nothing to type except your name.</p>
       <div class="card form"><label for="nm">Your name</label><input id="nm" autocomplete="name" maxlength="60" value="${e((S.profile || {}).name || "")}"><label for="st">Your startup or idea (a name for it)</label><input id="st" maxlength="80" value="${e((S.profile || {}).startup || "")}">
       <label class="chk"><input type="checkbox" id="c18"> I am 18 or older.</label>
       <label class="chk"><input type="checkbox" id="cc"> I understand the hard questions are <b>thought experiments to test how committed I am</b>. Nobody is asking me to take money from my family, or to do anything I do not choose to do. I can pause any time.</label>
-      <button class="btn" id="startbtn" data-act="start" disabled>Begin the 60-minute session</button></div>
-      <ul class="how"><li><b>6 units</b> of about 10 minutes</li><li><b>Tap only.</b> True or false, choose, tick, slide</li><li>Questions come back later in <b>different shapes</b></li><li>The score rewards <b>honesty</b>, not big claims</li></ul><p class="small demo">Just looking? <a href="#demo=results" data-act="reload">Open a sample founder's result</a> · <a href="#demo=q:chain" data-act="reload">a sample question</a> · <a href="#demo=fail" data-act="reload">a rejected mission</a> · <a href="#demo=pass" data-act="reload">an accepted mission</a></p></section>`;
+      <button class="btn" id="startbtn" data-act="start" disabled>Begin</button></div>
+      <ul class="how"><li><b>7 short rounds.</b> Go at your own pace</li><li><b>Tap only.</b> True or false, choose, tick, slide</li><li>Questions come back later in <b>different shapes</b></li><li>The score rewards <b>honesty</b>, not big claims</li></ul><p class="small demo">Just looking? <a href="#demo=results" data-act="reload">Open a sample founder's result</a> · <a href="#demo=q:chain" data-act="reload">a sample question</a> · <a href="#demo=fail" data-act="reload">a rejected mission</a> · <a href="#demo=pass" data-act="reload">an accepted mission</a></p></section>`;
     },
     daydream() {
       return `<section class="center"><p class="eyebrow">Before we start</p><h1>Be honest: how ready is your idea to get funded?</h1><p class="lead">0 means nobody would invest. 100 means investors will queue up. Your answer stays hidden until the end.</p><div class="card"><div class="big" id="ddv">${S.daydream}</div><input type="range" id="dd" min="0" max="100" value="${S.daydream}" aria-label="Readiness from 0 to 100"><div class="ends"><span>Not ready</span><span>Investors will queue</span></div><button class="btn" data-act="ddok">Lock in my answer</button></div></section>`;
@@ -121,7 +120,7 @@
     },
     unitIntro() {
       const un = unit();
-      return `<section class="center"><p class="eyebrow">Unit ${S.u + 1} of ${PF.UNITS.length} · about ${un.min} minutes</p><h1>${e(un.title)}</h1><p class="lead">What we will find out: <b>${e(un.finds)}</b></p><p class="small">Your idea: ${e(flavourOf())}</p><button class="btn" data-act="unitgo">Start</button></section>`;
+      return `<section class="center"><p class="eyebrow">Chapter ${un.ch}: ${e(un.chName)} · Round ${S.u + 1} of ${PF.UNITS.length}</p><h1>${e(un.title)}</h1><p class="lead">What we will find out: <b>${e(un.finds)}</b></p><p class="small">Your idea: ${e(flavourOf())}</p><button class="btn" data-act="unitgo">Start</button></section>`;
     },
     prelude() {
       const un = unit(), c = un.prelude[S.pi];
@@ -129,7 +128,7 @@
     },
     q() {
       const q = queue(), id = curId(), it = PF.ITEMS[id], c = PF.ctx(S), n = S.qi + 1;
-      const head = `<div class="qhead"><span>Unit ${S.u + 1} · Question ${n} of ${q.length}</span><div class="prog"><i style="width:${Math.round((S.qi / q.length) * 100)}%"></i></div></div>`;
+      const head = `<div class="qhead"><span>Round ${S.u + 1} · Question ${n} of ${q.length}</span><div class="prog"><i style="width:${Math.round((S.qi / q.length) * 100)}%"></i></div></div>`;
       if (it.fmt === "reveal") { const fl = PF.flow(S); return `<section>${head}<div class="card reveal">${fl ? REVEALS[it.kind](fl) : "<p>Some answers are missing, so the numbers cannot be shown yet.</p>"}</div><button class="btn" data-act="qnext">Continue</button></section>`; }
       if (S.sub && S.sub.kind === "conf") return `<section class="center">${head}<h1>How sure are you of that answer?</h1><div class="opts three"><button class="opt" data-act="conf" data-v="50">Not sure<small>50%</small></button><button class="opt" data-act="conf" data-v="75">Fairly sure<small>75%</small></button><button class="opt" data-act="conf" data-v="100">Certain<small>100%</small></button></div></section>`;
       if (S.sub && S.sub.kind === "fb") { const a = S.ans[id], ok = a.v === it.correct; return `<section class="center">${head}<div class="card fb ${ok ? "ok" : "no"}"><h2>${ok ? "Correct" : "Not quite"}</h2><p>${e(it.expl)}</p></div><button class="btn" data-act="qnext">Continue</button></section>`; }
@@ -152,13 +151,14 @@
     },
     mirror() {
       const un = unit(), ids = new Set(un.items), list = mirrorList();
-      return `<section><p class="eyebrow">The mirror · Unit ${S.u + 1}</p><h1>${list.length ? "Your answers do not agree. Look closely." : "Mirror clear: your answers agree."}</h1>${list.map((c) => `<div class="card mir"><h3>${e(c.title)}</h3><p>${e(c.msg)}</p><p class="small">Which is closer to the truth?</p><div class="chips">${[["first", "My first answer"], ["second", "My second answer"], ["unsure", "I am not sure"]].map((o) => `<button class="chip ${S.mirror[c.id] === o[0] ? "on" : ""}" data-act="mir" data-id="${c.id}" data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`).join("")}${list.length ? '<p class="small">"I am not sure" is a valid, honest answer.</p>' : ""}<button class="btn" data-act="mnext" ${list.every((c) => S.mirror[c.id]) ? "" : "disabled"}>${S.u + 1 < PF.UNITS.length ? "Next unit" : "See my results"}</button></section>`;
+      return `<section><p class="eyebrow">The mirror · Round ${S.u + 1}</p><h1>${list.length ? "Your answers do not agree. Look closely." : "Mirror clear: your answers agree."}</h1>${list.map((c) => `<div class="card mir"><h3>${e(c.title)}</h3><p>${e(c.msg)}</p><p class="small">Which is closer to the truth?</p><div class="chips">${[["first", "My first answer"], ["second", "My second answer"], ["unsure", "I am not sure"]].map((o) => `<button class="chip ${S.mirror[c.id] === o[0] ? "on" : ""}" data-act="mir" data-id="${c.id}" data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`).join("")}${list.length ? '<p class="small">"I am not sure" is a valid, honest answer.</p>' : ""}<button class="btn" data-act="mnext" ${list.every((c) => S.mirror[c.id]) ? "" : "disabled"}>${S.u === 2 ? "See the verdict" : S.u + 1 < PF.UNITS.length ? "Next round" : "See my results"}</button></section>`;
     },
     results() { return resultsScreen(); },
     rebuild() { return rebuildScreen(); },
     missionBrief() { return PF.missionUI.brief(S); },
     missionSubmit() { return PF.missionUI.submit(S); },
-    verdict() { return PF.missionUI.verdict(S); },
+    verdict() { return verdictScreen(); },
+    missionVerdict() { return PF.missionUI.verdict(S); },
   };
 
   function mirrorList() {
@@ -175,6 +175,11 @@
     return `<div class="castle" aria-label="Castle meter"><div class="tower">${c.list.map((a) => `<div class="blk ${a.tag || "none"}"><span>${e(a.label)}</span></div>`).join("")}</div><div class="cinfo"><b>${c.pctGuess}%</b><span>of your plan floats on guesses</span><em>Solid blocks are tested. Dashed blocks float in the air.</em></div></div>`;
   }
 
+  function firstNumberCard(f) {
+    const md = PF.val(S, "moneyDream"); if (!md || !f) return "";
+    const note = md > f.peakCash * 3 ? "Your first number is more than three times what your own numbers support. Step 3 will test every rupee of it with real quotes." : md < f.peakCash ? "Your first number is lower than your own numbers need. You may be short of cash." : "Your first number and your numbers are in the same range. Step 3 will test it with real quotes.";
+    return `<h2>Your first number, and what your numbers say</h2><div class="card"><div class="tiles">${statTile("you first said your idea needs", money(md), "")}${statTile("your own first estimate of the cash needed", money(f.peakCash), "amber")}</div><p class="note">${note}</p></div>`;
+  }
   function resultsScreen() {
     const r = PF.reality(S), f = PF.flow(S), c = r.castle, ch = r.checks;
     const alts = PF.val(S, "alts"), nob = ch.find((x) => x.id === "o1");
@@ -193,7 +198,7 @@
     return `<section><p class="eyebrow">Step 1 result · ${e((S.profile || {}).startup || "")}</p><h1>Your daydream meets your numbers</h1>
     <div class="card gauge"><div><span>You felt your idea was</span><b>${S.daydream}/100</b><div class="gbar"><i style="width:${S.daydream}%"></i></div></div><div><span>Your answers say</span><b class="${r.score < 50 ? "neg" : ""}">${r.score}/100</b><div class="gbar real"><i style="width:${r.score}%"></i></div></div></div>
     <p class="lead2">${gap > 20 ? "A gap of <b>" + gap + " points</b>. That gap is the daydream. It is normal at this stage, and closing it is the whole program." : gap > 5 ? "A gap of <b>" + gap + " points</b>. You were a little optimistic, which is normal." : "Your feeling and your numbers are close. That is rare and good."}</p>
-    <h2>Your Reality Card</h2><div class="tiles">${tiles}</div>
+    ${firstNumberCard(f)}<h2>Your Reality Card</h2><div class="tiles">${tiles}</div>
     ${f ? `<h2>Your money flow</h2><div class="card">${mapHTML(f)}</div>` : ""}
     <h2>The castle</h2><div class="card">${castleHTML(c)}</div>
     <h2>Where your points went</h2><div class="card"><ul class="ded">${r.items.length ? r.items.map((i) => `<li><span>${e(i.label)}</span><b>−${i.pts}</b></li>`).join("") : "<li>Nothing to deduct. Very good.</li>"}</ul></div>
@@ -218,15 +223,35 @@
     c10: ["Track 20 real customers for 3 months", "Ask people who stopped why they stopped", "Plan with the lower number"],
     castle: ["Test your three most important guessed numbers this week", "Ask five real customers the price question", "Get one real quote for your biggest cost"],
   };
-  const alias = { c7b: "c7", c1b: "c1", g1: "c1", g2: "c5" };
-  function flagsToFix() {
-    const r = PF.reality(S), seen = new Set(), out = [];
-    r.checks.slice().sort((a, b) => b.sev - a.sev).forEach((c) => { const k = alias[c.id] || c.id; if (FIXES[k] && !seen.has(k) && out.length < 3) { seen.add(k); out.push({ id: k, title: c.title, msg: c.msg }); } });
-    if (r.castle.pctGuess >= 40 && out.length < 4) out.push({ id: "castle", title: "Your plan floats on guesses", msg: r.castle.pctGuess + "% of your plan is guesswork." });
+  FIXES.c11 = ["Ask 5 possible customers: 'Would you pay me for this, and how much?' and note each answer", "Find one real person or business who would pay today, even a small amount", "Rewrite the idea around the person who truly has the money"];
+  FIXES.c12 = ["Find 3 people who really paid for something similar in the last 6 months", "Ask 5 people what they spent and where", "Drop the claim until you can name one real payer"];
+  FIXES.c13 = ["Ask 10 people: 'What did you do about this last time? Did you pay?'", "Look for proof of money moving: competitor prices, sales, reviews", "Pick the part of the problem people already pay for"];
+  FIXES.c14 = ["Plan your first 50 customers at full price", "Work out how many rupees you can afford to lose per customer, and how many customers that buys", "Offer a free trial of the product, not a lower price"];
+  FIXES.c15 = ["Look at what the alternatives do badly, and build your edge there", "Say 'like X, but for Y' in your pitch and see if it still excites you", "Ask 5 customers why they use the alternatives"];
+  FIXES.c16 = ["Find out why the others failed and write down three reasons", "Check how big the market really is, using real numbers", "Pick a smaller starting group where the problem is clearly bigger"];
+  FIXES.b1 = ["Pick your most dangerous belief and design one cheap test this week", "Ask someone who has built a business to attack that belief", "Rewrite the belief as a question you will answer with data"];
+  const NEWDIR = ["Narrow to one small group of customers who clearly pay", "Pick a different problem you have personally lived and paid to solve", "Keep the idea, but find 10 people who will pay before you build anything"];
+  const alias = { c7b: "c7", c1b: "c1", g1: "c1", g2: "c5", c11a: "c11", c11b: "c11", c13b: "c13", c16b: "c16" };
+  function flagsToFix(scope) {
+    const r = PF.reality(S), seen = new Set(), out = [], isIdea = (c) => PF.IDEA_IDS.includes(c.id);
+    r.checks.filter((c) => (scope === "idea" ? isIdea(c) : !isIdea(c))).sort((a, b) => b.sev - a.sev).forEach((c) => { const k = alias[c.id] || c.id; if (FIXES[k] && !seen.has(k) && out.length < 3) { seen.add(k); out.push({ id: k, title: c.title, msg: c.msg }); } });
+    if (scope !== "idea" && r.castle.pctGuess >= 40 && out.length < 4) out.push({ id: "castle", title: "Your plan floats on guesses", msg: r.castle.pctGuess + "% of your plan is guesswork." });
     return out;
   }
+  function verdictScreen() {
+    const v = PF.verdict(S), fl = flagsToFix("idea"), md = PF.val(S, "moneyDream"), tb = (PF.BELIEFS.find((b) => b.v === PF.val(S, "topBelief")) || {}).label;
+    const done = fl.every((f) => S.rebuild[f.id] !== undefined) && (v.level !== "new" || S.rebuild.newdir !== undefined);
+    const head = { standing: ["Standing", "Your idea survived the first round. It is not proven, only not broken yet."], fixable: ["Fixable", "Your idea has real problems, and each one has a fix you can test."], new: ["Needs a new direction", "As it stands, the idea does not hold. That is useful to know before spending any money."] }[v.level];
+    return `<section><p class="eyebrow">Chapter A · the verdict</p><h1>${head[0]}</h1><p class="lead">${head[1]}</p>
+    ${v.flags.slice(0, 4).map((c) => `<div class="card mir"><h3>${e(c.title)}</h3><p>${e(c.msg)}</p></div>`).join("") || '<div class="card"><p>No serious problems found. Good. Chapter B tests the numbers.</p></div>'}
+    ${tb ? `<div class="card"><p class="small">The belief you feared most</p><h3>${e(tb)}</h3><p>Test this one first.</p></div>` : ""}
+    ${md ? `<div class="card"><p class="small">The first number you gave for the money needed</p><h3>${money(md)}</h3><p>Keep it in mind. Chapter B and Step 3 will show what your own numbers support.</p></div>` : ""}
+    ${fl.length ? `<h2>Pick one fix for each problem</h2>${fl.map((f) => `<div class="card rb"><h3>${e(f.title)}</h3><div class="opts">${FIXES[f.id].map((t, i) => `<button class="opt ${S.rebuild[f.id] === i ? "on" : ""}" data-act="fix" data-id="${f.id}" data-v="${i}">${e(t)}</button>`).join("")}</div></div>`).join("")}` : ""}
+    ${v.level === "new" ? `<div class="card rb"><h3>Choose a new direction</h3><div class="opts">${NEWDIR.map((t, i) => `<button class="opt ${S.rebuild.newdir === i ? "on" : ""}" data-act="fix" data-id="newdir" data-v="${i}">${e(t)}</button>`).join("")}</div></div>` : ""}
+    <button class="btn" data-act="verdictnext" ${done ? "" : "disabled"}>Continue to your ₹1 cycle</button></section>`;
+  }
   function rebuildScreen() {
-    const fl = flagsToFix(), done = fl.every((f) => S.rebuild[f.id] !== undefined);
+    const fl = flagsToFix("money"), done = fl.every((f) => S.rebuild[f.id] !== undefined);
     if (!fl.length) return `<section class="center"><h1>Nothing serious to rebuild</h1><p class="lead">Your answers agree and your numbers work on paper. Mission 1 will test them in the real world.</p><button class="btn" data-act="tomission">Go to Mission 1</button></section>`;
     return `<section><p class="eyebrow">Rebuild</p><h1>Pick one fix for each problem. Then test it this week.</h1><p class="lead">Breaking the idea is half the work. What survives is the version you can take to investors.</p>${fl.map((f) => `<div class="card rb"><h3>${e(f.title)}</h3><p class="small">${e(f.msg)}</p><div class="opts">${FIXES[f.id].map((t, i) => `<button class="opt ${S.rebuild[f.id] === i ? "on" : ""}" data-act="fix" data-id="${f.id}" data-v="${i}">${e(t)}</button>`).join("")}</div></div>`).join("")}${done ? `<div class="card v2"><h2>Your idea, version 2</h2><p><b>${e(flavourOf())}</b> for ${e((S.profile || {}).startup || "your startup")}.</p><ul>${fl.map((f) => `<li>${e(FIXES[f.id][S.rebuild[f.id]])}</li>`).join("")}</ul></div>` : ""}<button class="btn" data-act="tomission" ${done ? "" : "disabled"}>Go to Mission 1</button></section>`;
   }
@@ -261,12 +286,13 @@
     if (act === "snext") { const ids = mirrorList(); if (!ids.length) { return advanceUnit(); } return go("mirror"); }
     if (act === "mir") { S.mirror[d.id] = d.v; save(); return render(); }
     if (act === "mnext") { mirrorList().forEach((c) => S.shown.push(c.id)); return advanceUnit(); }
+    if (act === "verdictnext") { S.u = 3; S.qi = 0; S.pi = 0; S.cur = null; return go("unitIntro"); }
     if (act === "torebuild") return go("rebuild");
     if (act === "fix") { S.rebuild[d.id] = Number(d.v); save(); return render(); }
     if (act === "tomission") return go("missionBrief");
     if (PF.missionUI && PF.missionUI.click && PF.missionUI.click(act, d, S, { go, save, render })) return;
   });
-  function advanceUnit() { if (S.u + 1 < PF.UNITS.length) { S.u++; S.qi = 0; S.pi = 0; S.cur = null; return go("unitIntro"); } return go("results"); }
+  function advanceUnit() { if (S.u === 2) return go("verdict"); if (S.u + 1 < PF.UNITS.length) { S.u++; S.qi = 0; S.pi = 0; S.cur = null; return go("unitIntro"); } return go("results"); }
 
 
   // ---------- demo routes: index.html#demo=results | q:price | mirror:3 | story:2 | rebuild | mission | submit | fail | pass ----------
@@ -274,12 +300,13 @@
     const m = /#demo=([^&]+)/.exec(location.hash); if (!m) return;
     const raw = decodeURIComponent(m[1]), ci = raw.indexOf(":"), k = ci < 0 ? raw : raw.slice(0, ci), arg = ci < 0 ? "" : raw.slice(ci + 1); const P = PF.persona(); Object.assign(S, P);
     const unitOf = (id) => PF.UNITS.findIndex((u) => u.items.includes(id));
-    if (k === "results") { S.screen = "results"; S.u = 5; }
-    else if (k === "rebuild") { S.screen = "rebuild"; S.u = 5; }
-    else if (k === "mission") { S.screen = "missionBrief"; S.u = 5; }
+    if (k === "results") { S.screen = "results"; S.u = PF.UNITS.length - 1; }
+    else if (k === "verdict") { S.screen = "verdict"; S.u = 2; }
+    else if (k === "rebuild") { S.screen = "rebuild"; S.u = PF.UNITS.length - 1; }
+    else if (k === "mission") { S.screen = "missionBrief"; S.u = PF.UNITS.length - 1; }
     else if (k === "submit" || k === "fail" || k === "pass") {
-      S.u = 5; S.screen = "missionSubmit"; const mm = (S.mission = { issuedAt: Date.now(), witnesses: [] }); const f = (mm.f = { buy: 2000, sell: 2600, days: 20, buyers: 5, surprise: "slow", why: k === "pass" ? "time" : null, files: { buy: [{ name: "receipt1.jpg", size: 90000 }], sale: [{ name: "pay1.png", size: 40000 }, { name: "pay2.png", size: 41000 }, { name: "pay3.png", size: 42000 }] } });
-      if (k !== "submit") { const rels = k === "pass" ? ["stranger", "stranger", "friend", "classmate", "stranger"] : ["stranger", "friend", "family"]; rels.forEach((rel, i) => { const t = "demo" + i + k; mm.witnesses.push({ token: t }); try { localStorage.setItem("pf-w-" + t, JSON.stringify({ answer: "yes", pay: "upi", rel, at: Date.now(), device: "sim-" + i })); } catch (x) { /* ignore */ } }); mm.verdict = PF.missionUI.evaluate(S); S.screen = "verdict"; }
+      S.u = PF.UNITS.length - 1; S.screen = "missionSubmit"; const mm = (S.mission = { issuedAt: Date.now(), witnesses: [] }); const f = (mm.f = { buy: 2000, sell: 2600, days: 20, buyers: 5, surprise: "slow", why: k === "pass" ? "time" : null, links: k === "pass" ? ["https://www.myntra.com/kurtas", "https://www.fabindia.com/men-kurtas", "https://www.amazon.in/s?k=kurta", "https://www.ajio.com/men-kurtas", "https://example-local-shop.in/kurtas"] : ["https://www.myntra.com/kurtas", "https://www.amazon.in/s?k=kurta", "", "", ""], files: { buy: [{ name: "receipt1.jpg", size: 90000 }], sale: [{ name: "pay1.png", size: 40000 }, { name: "pay2.png", size: 41000 }, { name: "pay3.png", size: 42000 }] } });
+      if (k !== "submit") { const rels = k === "pass" ? ["stranger", "stranger", "friend", "classmate", "stranger"] : ["stranger", "friend", "family"]; rels.forEach((rel, i) => { const t = "demo" + i + k; mm.witnesses.push({ token: t }); try { localStorage.setItem("pf-w-" + t, JSON.stringify({ answer: "yes", pay: "upi", rel, at: Date.now(), device: "sim-" + i })); } catch (x) { /* ignore */ } }); mm.verdict = PF.missionUI.evaluate(S); S.screen = "missionVerdict"; }
     } else if (k === "q" && arg) { const u = unitOf(arg); S.u = u; S.queue = {}; S.screen = "q"; S.qi = Math.max(0, queue().indexOf(arg)); }
     else if (k === "story" || k === "mirror") { S.u = Number(arg || 1) - 1; S.screen = k; }
     else if (k === "intro") { PF.store.reset(); Object.assign(S, fresh()); }
@@ -289,7 +316,7 @@
   // test helper: answer the current screen with a random valid response
   PF.ui = {
     auto(max) {
-      for (let i = 0; i < (max || 400) && !["results", "rebuild", "missionBrief", "missionSubmit", "verdict"].includes(S.screen); i++) {
+      for (let i = 0; i < (max || 400) && !["results", "rebuild", "missionBrief", "missionSubmit"].includes(S.screen); i++) {
         const r = PF.rng(PF.hash("auto" + i + S.screen + S.qi));
         const scr = S.screen;
         if (scr === "intro") { S.profile = { name: "Test Founder", startup: "TestCo" }; S.seed = 1234; go("daydream"); }
@@ -307,8 +334,9 @@
           else if (it.fmt === "multi") { const o = it.opts.filter((x) => x.v !== it.excl); const k = o.filter(() => r() < 0.5).map((x) => x.v); answer(id, k.length ? k : [o[0].v]); }
           else if (it.fmt === "matrix") { const m = {}; it.rows.forEach((x) => (m[x[0]] = { who: it.who[Math.floor(r() * 4)][0], know: it.know[Math.floor(r() * 3)][0] })); answer(id, m); }
           else if (it.fmt === "tf" || it.fmt === "reflex") answer(id, r() < 0.5);
-          else { const o = it.opts[Math.floor(r() * it.opts.length)]; answer(id, o.v); }
+          else { const base = it.optsFn ? it.optsFn(S) : it.opts; const o = base[Math.floor(r() * base.length)]; answer(id, o.v); }
         }
+        else if (scr === "verdict") { flagsToFix("idea").forEach((f) => (S.rebuild[f.id] = 0)); S.rebuild.newdir = 0; S.u = 3; S.qi = 0; S.pi = 0; go("unitIntro"); }
         else if (scr === "story") { const l = mirrorList(); if (!l.length) advanceUnit(); else go("mirror"); }
         else if (scr === "mirror") { mirrorList().forEach((c) => { S.mirror[c.id] = "unsure"; S.shown.push(c.id); }); advanceUnit(); }
       }

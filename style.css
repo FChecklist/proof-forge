@@ -90,3 +90,5 @@ input[type=range]{width:100%;accent-color:var(--saf);height:34px}.ends{display:f
 .card.ok{border:2px solid var(--green)}.card.no{border:2px solid var(--red)}.locked{opacity:.6;border-style:dashed}.locked.open{opacity:1;border:2px solid var(--green);border-style:solid;background:#EAF7EE}
 @media (max-width:640px){body{font-size:17px}.opts.two,.opts.three,.cmp,.gauge,.how{grid-template-columns:1fr}.dots{display:none}.tower{width:100%}.pair .opt{min-height:90px}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+.alt-in{display:block;width:100%;font:inherit;padding:11px 14px;border:2px solid var(--line);border-radius:12px;margin:8px 0}
+.verd{border-left:0}

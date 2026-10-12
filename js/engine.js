@@ -120,6 +120,23 @@
     if (fl && has("cac") && has("m6") && has("custFreq") && has("leakPct") && fl.ltvCac !== null && fl.ltvCac !== Infinity && fl.ltvCac < 1) add("l3", 3, "Winning a customer costs more than they are worth", "A customer is worth about " + PF.inr(fl.ltv) + " in a year and costs " + PF.inr(v("cac")) + " to win.", ["cac"]);
     if (v("cac") === 0) add("l4", 1, "Customers for free?", "Your time and free offers are costs too. 'Zero' usually means 'not measured'.", ["cac"]);
     if (nobody > 0) add("o1", Math.min(2, nobody > 2 ? 2 : 1), nobody + " link" + (nobody > 1 ? "s" : "") + " in your chain have no owner", "Nobody is responsible yet for " + nobody + " step(s) between a sale and the money.", ["chain"]);
+    const bel = v("beliefs") || [], wp = v("whoPays");
+    if (wp === "nobody") add("c11", 2, "Nobody has agreed to pay yet", "A business needs a payer. Until someone agrees to pay, this is an idea, not a business.", ["whoPays"]);
+    else if (wp === "ads") add("c11a", 1, "Advertisers pay later, not first", "Advertisers pay only after you have a very large audience. Until then, who pays you?", ["whoPays"]);
+    else if (wp === "parents") add("c11b", 1, "The user is not the payer", "You must win two people: the one who uses it and the one who pays.", ["whoPays"]);
+    const lad = v("ladder"), pk = v("paidKnow");
+    if (["paid", "search", "switch"].includes(lad) && ["none", "unknown"].includes(pk)) add("c12", 2, "Someone pays? You know nobody who does", "You said people pay for a fix, but you do not know a single person who spent money on it in the last 6 months.", ["ladder", "paidKnow"]);
+    if (v("gapSay") === true && ["complain", "dontknow"].includes(lad)) add("c13", 2, "Complaints are not payments", "People complain about many problems and pay for few. You have not seen anyone pay to solve this one.", ["gapSay", "ladder"]);
+    else if (lad === "free") add("c13b", 1, "People already solve it for free", "If people fix this for free today, why would they pay you?", ["ladder"]);
+    if (v("burnPlan") === "deep" || bel.includes("burn")) add("c14", 2, "Winning customers with deep discounts", "Deep discounts burn cash, and they only pay off if customers stay after the discount ends. The big names could afford it. Can you?", [v("burnPlan") === "deep" ? "burnPlan" : "beliefs"]);
+    if (bel.includes("unique") && has("alts") && alts >= 3) add("c15", 2, "'Nobody thought of this', yet you found " + alts, "You believe nobody thought of this, and you also found " + alts + " alternatives.", ["beliefs", "alts"]);
+    const wny = v("whyNotYet");
+    if (wny === "tried") add("c16", 2, "Others tried and failed", "You said others tried this and failed. What will you do differently, and how do you know?", ["whyNotYet"]);
+    else if (wny === "small") add("c16", 2, "The market may be too small", "You said the market may be too small or too poor. Investors back big markets.", ["whyNotYet"]);
+    else if (wny === "unknown") add("c16b", 1, "You do not know why nobody did it", "'I do not know' means the search for the reason is still to do.", ["whyNotYet"]);
+    const weak = ["onepct", "viral", "mktg", "solo", "slow", "nocopy", "freepay"].filter((x) => bel.includes(x)), bl = (x) => ((PF.BELIEFS || []).find((b) => b.v === x) || {}).label;
+    if (weak.length >= 2) add("b1", 2, "Beliefs that often sink plans", "You ticked " + weak.length + " beliefs that often sink early plans: " + weak.map(bl).join("; ") + ".", ["beliefs"]);
+    else if (weak.length === 1) add("b1", 1, "A belief to test", "You believe: " + bl(weak[0]) + ". Many plans that failed believed the same.", ["beliefs"]);
     return out;
   };
   PF.freqLabel = (k) => ({ once: "once ever", year: "once a year", few: "every few months", month: "monthly", week: "weekly", day: "daily" }[k] || k);
@@ -142,13 +159,24 @@
     return { list, total, pctGuess: Math.round((guess / total) * 100), pctTested: Math.round((tested / total) * 100) };
   };
 
+  PF.IDEA_IDS = ["c1", "c1b", "g1", "c2", "c7", "c7b", "c11", "c11a", "c11b", "c12", "c13", "c13b", "c14", "c15", "c16", "c16b", "b1"];
+  PF.verdict = (S) => {
+    const ch = PF.checks(S).filter((c) => PF.IDEA_IDS.includes(c.id));
+    const pts = ch.reduce((a, c) => a + c.sev, 0);
+    const dead = ch.some((c) => c.id === "c11") && ["complain", "dontknow", "free"].includes(PF.val(S, "ladder"));
+    const level = dead || pts >= 9 ? "new" : pts >= 3 ? "fixable" : "standing";
+    return { level, pts, flags: ch.slice().sort((a, b) => b.sev - a.sev) };
+  };
+
   // ---------- reality score: transparent, every deduction is shown to the founder ----------
   PF.reality = (S) => {
     const items = [], checks = PF.checks(S), c = PF.castle(S);
     let score = 100;
     const pen = (label, pts) => { if (pts > 0) { items.push({ label, pts: Math.round(pts) }); score -= pts; } };
-    pen("Answers that contradict each other", Math.min(30, checks.filter((x) => x.sev >= 2 || x.id.startsWith("g")).length * 6));
-    pen("Smaller inconsistencies", Math.min(10, checks.filter((x) => x.sev === 1 && !x.id.startsWith("g")).length * 2));
+    const idea = checks.filter((x) => PF.IDEA_IDS.includes(x.id)), rest = checks.filter((x) => !PF.IDEA_IDS.includes(x.id));
+    pen("Problems with the idea itself", Math.min(30, idea.reduce((a, x) => a + (x.sev >= 2 ? 6 : 3), 0)));
+    pen("Answers that contradict each other", Math.min(24, rest.filter((x) => (x.sev >= 2 && !x.id.startsWith("l") && x.id !== "o1") || x.id.startsWith("g")).length * 6));
+    pen("Smaller inconsistencies", Math.min(10, rest.filter((x) => x.sev === 1 && !x.id.startsWith("g")).length * 2));
     pen("Plan stands on guesses (castle in the air)", c.pctGuess * 0.25);
     pen("Money does not work (loss, break-even, customer cost)", Math.min(25, checks.filter((x) => x.id.startsWith("l") && x.id !== "l4").length * 10));
     const nob = checks.find((x) => x.id === "o1"); if (nob) pen("Chain links with no owner", nob.sev * 4);
