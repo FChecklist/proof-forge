@@ -1,6 +1,6 @@
 // Answer mailbox. A funder, accountant or customer posts one sealed answer. It can be read with the token and never changed.
 // We hold ciphertext only: the key sits after the # in the link and never reaches us.
-import { json, sealed, limited, ipHash } from "../_lib.js";
+import { json, sealed, limited, ipHash, logEvent, sha } from "../_lib.js";
 const TOKEN = /^w[a-z0-9]{8,40}$/;
 export async function onRequestPost({ request, env, params }) {
   if (!TOKEN.test(params.token)) return json({ error: "bad token" }, 400);
@@ -9,6 +9,7 @@ export async function onRequestPost({ request, env, params }) {
   const c = sealed(raw); if (!c) return json({ error: "bad record" }, 400);
   const r = await env.DB.prepare("INSERT OR IGNORE INTO witness (token, c, ip_hash, at) VALUES (?, ?, ?, ?)").bind(params.token, c, await ipHash(env, request), Date.now()).run();
   if (!r.meta || r.meta.changes === 0) return json({ error: "already answered" }, 409);
+  await logEvent(env, request, "answer", (await sha(params.token)).slice(0, 16));
   return json({ ok: true }, 201);
 }
 export async function onRequestGet({ request, env, params }) {

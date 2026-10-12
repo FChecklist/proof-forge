@@ -1,12 +1,14 @@
 // Encrypted vault copy. The server only ever holds ciphertext and the wrapped keys; it cannot read either.
 // The first write claims the id with a secret (stored hashed). Later writes must present the same secret.
-import { json, sha, limited } from "../_lib.js";
+import { json, sha, limited, logEvent } from "../_lib.js";
 const ID = /^[a-f0-9]{32}$/, MAXB = 1500000;
 export async function onRequestGet({ request, env, params }) {
   if (!ID.test(params.id)) return json({ error: "bad id" }, 400);
   if (await limited(env, request, "vg", 60)) return json({ error: "slow down" }, 429);
   const row = await env.DB.prepare("SELECT meta, blob, at FROM vault WHERE id = ?").bind(params.id).first();
-  return row ? json({ meta: JSON.parse(row.meta), blob: row.blob, at: row.at }) : json({ error: "not found" }, 404);
+  if (!row) return json({ error: "not found" }, 404);
+  await logEvent(env, request, "vault_open", params.id);
+  return json({ meta: JSON.parse(row.meta), blob: row.blob, at: row.at });
 }
 export async function onRequestPut({ request, env, params }) {
   if (!ID.test(params.id)) return json({ error: "bad id" }, 400);

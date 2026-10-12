@@ -1,5 +1,5 @@
 // Visitor events for the Step 4 smoke test (a visit, a sign-up, a pre-order). Each is sealed. Many per token, capped.
-import { json, sealed, limited, ipHash } from "../_lib.js";
+import { json, sealed, limited, ipHash, logEvent, sha } from "../_lib.js";
 const TOKEN = /^w[a-z0-9]{8,40}$/, CAP = 3000;
 export async function onRequestPost({ request, env, params }) {
   if (!TOKEN.test(params.token)) return json({ error: "bad token" }, 400);
@@ -9,6 +9,7 @@ export async function onRequestPost({ request, env, params }) {
   const n = await env.DB.prepare("SELECT COUNT(*) AS n FROM go_event WHERE token = ?").bind(params.token).first();
   if (n && n.n >= CAP) return json({ error: "full" }, 409);
   await env.DB.prepare("INSERT INTO go_event (token, c, ip_hash, at) VALUES (?, ?, ?, ?)").bind(params.token, c, await ipHash(env, request), Date.now()).run();
+  await logEvent(env, request, "visitor", (await sha(params.token)).slice(0, 16));
   return json({ ok: true }, 201);
 }
 export async function onRequestGet({ request, env, params }) {
