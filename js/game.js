@@ -7,8 +7,8 @@
   const PF = (window.PF = window.PF || {});
   const esc = PF.esc;
   const LEVELS = [
-    { n: 1, name: "Dreamer", xp: 0, icon: "💭" }, { n: 2, name: "Questioner", xp: 500, icon: "🔍" }, { n: 3, name: "Tester", xp: 1400, icon: "🧪" }, { n: 4, name: "Validator", xp: 3000, icon: "✅" },
-    { n: 5, name: "Operator", xp: 5200, icon: "⚙️" }, { n: 6, name: "Pitch-ready", xp: 8000, icon: "🎤" }, { n: 7, name: "Deal-maker", xp: 11000, icon: "🤝" }, { n: 8, name: "Funded", xp: 14500, icon: "🚀" },
+    { n: 1, name: "Dreamer", xp: 0, icon: "💭" }, { n: 2, name: "Questioner", xp: 400, icon: "🔍" }, { n: 3, name: "Tester", xp: 1200, icon: "🧪" }, { n: 4, name: "Validator", xp: 2600, icon: "✅" },
+    { n: 5, name: "Operator", xp: 4200, icon: "⚙️" }, { n: 6, name: "Pitch-ready", xp: 6000, icon: "🎤" }, { n: 7, name: "Deal-maker", xp: 8200, icon: "🤝" }, { n: 8, name: "Funded", xp: 9300, icon: "🚀" },
   ];
   const G = (PF.game = { LEVELS, queue: [], soundOn: false });
   G.g = (S) => (S.game = S.game || { xp: 0, coins: 0, once: {}, badges: [], streak: 0, best: 0, rounds: {}, sound: false, levelUp: null, celebrate: null });

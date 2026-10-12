@@ -49,6 +49,36 @@
         + "<h2>Would you take a meeting if you were an investor?</h2>" + ch("meet", [["yes", "Yes"], ["maybe", "Maybe"], ["no", "No"]]) + "<h2>Could you say who pays them?</h2>" + ch("who", [["yes", "Yes"], ["no", "No"]])
         + "<h2>What is your biggest doubt?</h2>" + ch("doubt", [["price", "The price"], ["market", "The market is too small"], ["trust", "I do not trust the team"], ["copy", "It can be copied"], ["unclear", "I did not understand it"], ["other", "Something else"]]) + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answers</button></section>";
     }
+    if (kind === "meet") {
+      const ok = a.rel && a.held && a.obj && a.next;
+      return '<section><p class="eyebrow">30 seconds, please</p><h1>Did you meet ' + esc(who) + " about " + esc(what) + "?</h1><p class=\"small\">Only your taps are recorded.</p>"
+        + '<div class="card"><h2>Who are you?</h2>' + ch("rel", [["investor", "An investor"], ["programme", "Someone from a funding programme"], ["mentor", "A mentor or industry expert"], ["other", "Someone else"]])
+        + "<h2>Did the meeting take place?</h2>" + ch("held", [["yes", "Yes"], ["no", "No"]])
+        + "<h2>What was your main doubt?</h2>" + ch("obj", [["market", "The market is too small"], ["team", "The team"], ["traction", "Not enough proof yet"], ["price", "The numbers"], ["copy", "It can be copied"], ["none", "None"]])
+        + "<h2>What would happen next?</h2>" + ch("next", [["follow", "I would take a follow-up"], ["intro", "I would introduce them to someone"], ["wait", "Come back with more proof"], ["no", "Not for us"]]) + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answers</button></section>";
+    }
+    if (kind === "review") {
+      const ok = a.role && a.rev && a.conc && a.rec;
+      return '<section><p class="eyebrow">30 seconds, please</p><h1>' + esc(who) + " asked you to look at the terms they were offered.</h1><p class=\"small\">This is only a record of what you said. It is not legal advice.</p>"
+        + '<div class="card"><h2>What is your role?</h2>' + ch("role", [["lawyer", "Lawyer"], ["ca", "Chartered accountant"], ["mentor", "Experienced founder or mentor"], ["other", "Other"]])
+        + "<h2>Did you read the terms?</h2>" + ch("rev", [["yes", "Yes, fully"], ["part", "Partly"], ["no", "No"]])
+        + "<h2>How many terms worry you?</h2>" + ch("conc", [["0", "None"], ["1", "One or two"], ["3", "Three or more"]])
+        + "<h2>What would you advise?</h2>" + ch("rec", [["sign", "Fine to sign"], ["change", "Sign only with changes"], ["no", "Do not sign"]]) + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answers</button></section>";
+    }
+    if (kind === "docs") {
+      const ok = a.role && a.seen && a.order;
+      return '<section><p class="eyebrow">30 seconds, please</p><h1>Confirm ' + esc(who) + "'s company papers.</h1><p class=\"small\">Only your taps are recorded.</p>"
+        + '<div class="card"><h2>Who are you?</h2>' + ch("role", [["ca", "Their accountant or CA"], ["cs", "Company secretary or lawyer"], ["cofounder", "A co-founder"], ["other", "Someone else"]])
+        + "<h2>Have you seen the incorporation papers, the founder agreement and the share split?</h2>" + ch("seen", [["all", "All of them"], ["some", "Some of them"], ["none", "None"]])
+        + "<h2>Are they in order?</h2>" + ch("order", [["yes", "Yes"], ["fix", "Some need fixing"], ["no", "No"]]) + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answers</button></section>";
+    }
+    if (kind === "funder") {
+      const ok = a.rel && a.stage && a.amt;
+      return '<section><p class="eyebrow">30 seconds, please</p><h1>Confirm your support for ' + esc(who) + ".</h1><p class=\"small\">Business: " + esc(what) + ". Only your taps are recorded.</p>"
+        + '<div class="card"><h2>Who are you?</h2>' + ch("rel", [["investor", "An investor"], ["programme", "A funding programme"], ["bank", "A bank or lender"], ["other", "Someone else"]])
+        + "<h2>Where are you with them?</h2>" + ch("stage", [["verbal", "I said yes in words only"], ["signed", "We signed an agreement"], ["received", "The money has been sent"]])
+        + "<h2>How much?</h2>" + ch("amt", [["25", "Up to a quarter of their ask"], ["50", "About half"], ["75", "Most of it"], ["100", "All of it or more"]]) + '</div><button class="btn" id="go" ' + (ok ? "" : "disabled") + ">Send my answers</button></section>";
+    }
     if (kind === "operator") {
       const ok = a.answer && (a.answer === "no" || a.hours);
       return '<section><p class="eyebrow">20 seconds, please</p><h1>' + esc(who) + " says they spent a working day in your business. Is that true?</h1><p class=\"small\">Only your taps are recorded.</p>"
