@@ -124,10 +124,21 @@
     if (wp === "nobody") add("c11", 2, "Nobody has agreed to pay yet", "A business needs a payer. Until someone agrees to pay, this is an idea, not a business.", ["whoPays"]);
     else if (wp === "ads") add("c11a", 1, "Advertisers pay later, not first", "Advertisers pay only after you have a very large audience. Until then, who pays you?", ["whoPays"]);
     else if (wp === "parents") add("c11b", 1, "The user is not the payer", "You must win two people: the one who uses it and the one who pays.", ["whoPays"]);
-    const lad = v("ladder"), pk = v("paidKnow");
-    if (["paid", "search", "switch"].includes(lad) && ["none", "unknown"].includes(pk)) add("c12", 2, "Someone pays? You know nobody who does", "You said people pay for a fix, but you do not know a single person who spent money on it in the last 6 months.", ["ladder", "paidKnow"]);
-    if (v("gapSay") === true && ["complain", "dontknow"].includes(lad)) add("c13", 2, "Complaints are not payments", "People complain about many problems and pay for few. You have not seen anyone pay to solve this one.", ["gapSay", "ladder"]);
-    else if (lad === "free") add("c13b", 1, "People already solve it for free", "If people fix this for free today, why would they pay you?", ["ladder"]);
+    const pw = v("pWho"), pwh = v("pWhere"), ph = v("pHow"), pc = v("pCost"), pt = v("pToday"), ps = v("pSeen");
+    if (pw === "everyone") add("p1", 2, "'Everyone' is nobody", "A problem that belongs to everyone is owned by no one. Investors want one specific group.", ["pWho"]);
+    if (pwh === "world") add("p5", 1, "The whole world is not a starting point", "Start where you can reach people on foot, then grow.", ["pWhere"]);
+    if (ps === "imagine") add("p2", 2, "Imagined, not observed", "You said you imagined this problem. Nobody has shown you that it is real.", ["pSeen"]);
+    else if (["read", "told"].includes(ps)) add("p2", 1, "A second-hand problem", "You know this problem from what others said or wrote, not from seeing it happen.", ["pSeen"]);
+    if (["year", "once"].includes(ph) && ["tiny", "small"].includes(pc)) add("p3", 2, "Rare and cheap", "People face this rarely and it costs them little. That is hard to build a business on.", ["pHow", "pCost"]);
+    else if (pc === "tiny") add("p4", 1, "A small problem", "Each time it happens it costs people very little. Small problems rarely justify paying.", ["pCost"]);
+    if (has("pTest") && !PF.sameSet(v("pTest"), ["a", "c", "e"])) add("p6", 1, "Problems mixed with solutions", "Some statements you picked describe a product, not a pain. Describe the pain, not the product.", ["pTest"]);
+    if (["nothing", "complain", "unknown"].includes(pt)) add("c13", 2, "Nobody pays for it today", "Today people do nothing or only complain. That often means the problem is not painful enough to pay for.", ["pToday"]);
+    else if (pt === "free") add("c13b", 1, "People already solve it for free", "If people fix this for free today, why would they pay you?", ["pToday"]);
+    const pk = v("paidKnow");
+    if (["paid", "mixed"].includes(pt) && ["none", "unknown"].includes(pk)) add("c12", 2, "Someone pays? You know nobody who does", "You said people already pay for something, but you do not know a single person who spent money on it in the last 6 months.", ["pToday", "paidKnow"]);
+    if (v("payGut") === true && ["none", "unknown"].includes(pk)) add("g3", 1, "Gut and reason disagree", "Your fast answer said people already spend money on this. After thinking, you know nobody who did.", ["payGut", "paidKnow"]);
+    const lim = { tiny: 1, small: 3, medium: 4, big: 5 }[pc];
+    if (has("priceSense") && lim !== undefined && v("priceSense") > lim) add("c17", 2, "You expect more than the problem costs", "You expect people to pay more than the problem costs them each time it happens.", ["priceSense", "pCost"]);
     if (v("burnPlan") === "deep" || bel.includes("burn")) add("c14", 2, "Winning customers with deep discounts", "Deep discounts burn cash, and they only pay off if customers stay after the discount ends. The big names could afford it. Can you?", [v("burnPlan") === "deep" ? "burnPlan" : "beliefs"]);
     if (bel.includes("unique") && has("alts") && alts >= 3) add("c15", 2, "'Nobody thought of this', yet you found " + alts, "You believe nobody thought of this, and you also found " + alts + " alternatives.", ["beliefs", "alts"]);
     const wny = v("whyNotYet");
@@ -139,6 +150,7 @@
     else if (weak.length === 1) add("b1", 1, "A belief to test", "You believe: " + bl(weak[0]) + ". Many plans that failed believed the same.", ["beliefs"]);
     return out;
   };
+  PF.sameSet = (a, b) => Array.isArray(a) && a.length === b.length && b.every((x) => a.includes(x));
   PF.freqLabel = (k) => ({ once: "once ever", year: "once a year", few: "every few months", month: "monthly", week: "weekly", day: "daily" }[k] || k);
 
   // ---------- castle meter: how much of the plan stands on tested ground ----------
@@ -159,11 +171,11 @@
     return { list, total, pctGuess: Math.round((guess / total) * 100), pctTested: Math.round((tested / total) * 100) };
   };
 
-  PF.IDEA_IDS = ["c1", "c1b", "g1", "c2", "c7", "c7b", "c11", "c11a", "c11b", "c12", "c13", "c13b", "c14", "c15", "c16", "c16b", "b1"];
+  PF.IDEA_IDS = ["c1", "c1b", "g1", "g3", "c2", "c7", "c7b", "c11", "c11a", "c11b", "c12", "c13", "c13b", "c14", "c15", "c16", "c16b", "c17", "b1", "p1", "p2", "p3", "p4", "p5", "p6"];
   PF.verdict = (S) => {
     const ch = PF.checks(S).filter((c) => PF.IDEA_IDS.includes(c.id));
     const pts = ch.reduce((a, c) => a + c.sev, 0);
-    const dead = ch.some((c) => c.id === "c11") && ["complain", "dontknow", "free"].includes(PF.val(S, "ladder"));
+    const dead = ch.some((c) => c.id === "c11") && ["nothing", "complain", "unknown", "free"].includes(PF.val(S, "pToday"));
     const level = dead || pts >= 9 ? "new" : pts >= 3 ? "fixable" : "standing";
     return { level, pts, flags: ch.slice().sort((a, b) => b.sev - a.sev) };
   };

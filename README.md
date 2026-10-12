@@ -2,7 +2,7 @@
 
 Run: double-click `run.bat` (or `python -m http.server 8210` here) and open http://127.0.0.1:8210/index.html. No internet, no AI, no cost. State is saved in the browser (localStorage); the Reset button clears it.
 
-Structure (owner decisions 2026-10-12): no timelines shown to anyone, each founder moves at their own pace; Chapter A (3 rounds) questions the idea itself and ends with a verdict (Standing / Fixable / Needs a new direction) plus fixes; Chapter B (4 rounds) is the Rs 1 cycle; Mission 1 = 5 real alternatives with links + one real money cycle with proof.
+Structure (owner decisions 2026-10-12): no timelines shown to anyone, each founder moves at their own pace; Chapter A (3 rounds: define the problem, does anyone pay for it, your solution tested) starts with the PROBLEM and questions the idea itself and ends with a verdict (Standing / Fixable / Needs a new direction) plus fixes; Chapter B (4 rounds) is the Rs 1 cycle; Mission 1 = 5 real alternatives with links + one real money cycle with proof.
 
 Demo links (a sample founder, "KurtaKart"): `#demo=verdict`, `#demo=results`, `#demo=q:chain`, `#demo=q:reveal:cycle`, `#demo=mirror:3`, `#demo=story:3`, `#demo=rebuild`, `#demo=mission`, `#demo=submit`, `#demo=fail`, `#demo=pass`.
 

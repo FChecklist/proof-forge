@@ -75,6 +75,11 @@
     return `<div class="map">${step("You put in", "₹1,00,000", "to start one cycle")}${arr}${step("It buys", Math.round(b.unitsBought).toLocaleString("en-IN") + " " + n + "s", "at " + money(b.cost) + " each")}${arr}${step("It waits", (b.stock + b.deliv) + " days", "stock, making, delivery")}${arr}${step("Customers pay", money(b.rev), "after " + b.recv + " more days")}${arr}${step("Back as", money(b.rev * (1 - b.leaks)), "after leaks, before fixed costs")}</div><p class="loop">↺ This loop takes <b>${PF.num(b.cycleDays, 0)} days</b>${b.negative ? " (customers fund you: check that this is real)" : ""}. In a year it can run <b>${PF.num(b.cyclesYr, 1)} times</b>.</p>`;
   }
   const REVEALS = {
+    problem() {
+      const sen = PF.problemSentence(S), dims = PF.problemStrength(S), tot = dims.reduce((a, d) => a + d.lv, 0);
+      const word = ["Not yet", "Some", "Strong"];
+      return `<h2>Your problem, in one sentence</h2><blockquote class="psent">${e(sen || "Answer the questions first.")}</blockquote><h3>How strong is it as a problem?</h3><div class="pdims">${dims.map((d) => `<div class="pdim"><span>${e(d.label)}</span><div class="pdots" aria-hidden="true">${[0, 1].map((i) => `<i class="${d.lv > i ? "on" : ""}"></i>`).join("")}</div><b class="${d.lv === 0 ? "neg" : ""}">${word[d.lv]}</b></div>`).join("")}</div><p class="note">${tot >= 8 ? "A strong problem. The next round checks whether people pay for it." : tot >= 5 ? "A real problem with weak spots. The next round checks whether people pay." : "As it stands this is a weak problem. Look at the rows marked 'Not yet'. Each one is something an investor will ask about."}</p>`;
+    },
     agg(f) { const a = f.agg; if (!a) return "<p>Answer the price and your cut first.</p>"; return `<h2>The aggregator's arithmetic</h2><p class="lead2">To earn <b>₹10 lakh a month</b> from a ${PF.num(f.base.cutPct, 0)}% cut, you must move:</p><div class="tiles">${statTile("of orders per month", money(a.gmv), "amber")}${statTile("orders per month", Math.round(a.orders).toLocaleString("en-IN"), "amber")}${statTile("orders every single day", Math.round(a.perDay).toLocaleString("en-IN"), "red")}</div><p class="note">Suppliers must be signed, customers won, and nobody must go around you. Which of these will you do first?</p>`; },
     cycle(f) {
       const b = f.base, rows = [["1 day", 365, "₹3.65 crore"], ["1 week", 52, "₹52 lakh"], ["1 month", 12, "₹12 lakh"]];
@@ -112,7 +117,7 @@
     flavour() {
       const groups = {}; PF.FLAVOURS.forEach((f) => { (groups[f.shape] = groups[f.shape] || []).push(f); });
       const order = ["seller", "aggregator", "maker", "outlet", "service", "digital", "content", "heavy", "router"];
-      return `<section><p class="eyebrow">Your idea</p><h1>Which one is closest to what you want to build?</h1><p class="lead">Pick the nearest. If nothing fits, choose the last one at the bottom.</p><div class="flav">${order.filter((o) => groups[o]).map((o) => `<div class="fgrp"><h3>${o === "router" ? "Not sure" : e(PF.SHAPES[o].name)}</h3><div class="chips">${groups[o].map((f) => `<button class="chip" data-act="flavour" data-id="${f.id}">${e(f.label)}</button>`).join("")}</div></div>`).join("")}</div></section>`;
+      return `<section><p class="eyebrow">Your solution</p><h1>Which kind of business is closest to the one you would build?</h1><p class="lead">Pick the nearest. If nothing fits, choose the last one at the bottom. Next we follow the money.</p><div class="flav">${order.filter((o) => groups[o]).map((o) => `<div class="fgrp"><h3>${o === "router" ? "Not sure" : e(PF.SHAPES[o].name)}</h3><div class="chips">${groups[o].map((f) => `<button class="chip" data-act="flavour" data-id="${f.id}">${e(f.label)}</button>`).join("")}</div></div>`).join("")}</div></section>`;
     },
     router() {
       const i = Object.keys(S.router).length, q = PF.ROUTER[i];
@@ -129,9 +134,9 @@
     q() {
       const q = queue(), id = curId(), it = PF.ITEMS[id], c = PF.ctx(S), n = S.qi + 1;
       const head = `<div class="qhead"><span>Round ${S.u + 1} · Question ${n} of ${q.length}</span><div class="prog"><i style="width:${Math.round((S.qi / q.length) * 100)}%"></i></div></div>`;
-      if (it.fmt === "reveal") { const fl = PF.flow(S); return `<section>${head}<div class="card reveal">${fl ? REVEALS[it.kind](fl) : "<p>Some answers are missing, so the numbers cannot be shown yet.</p>"}</div><button class="btn" data-act="qnext">Continue</button></section>`; }
+      if (it.fmt === "reveal") { const fl = PF.flow(S); const html = it.kind === "problem" ? REVEALS.problem() : fl ? REVEALS[it.kind](fl) : "<p>Some answers are missing, so the numbers cannot be shown yet.</p>"; return `<section>${head}<div class="card reveal">${html}</div><button class="btn" data-act="qnext">Continue</button></section>`; }
       if (S.sub && S.sub.kind === "conf") return `<section class="center">${head}<h1>How sure are you of that answer?</h1><div class="opts three"><button class="opt" data-act="conf" data-v="50">Not sure<small>50%</small></button><button class="opt" data-act="conf" data-v="75">Fairly sure<small>75%</small></button><button class="opt" data-act="conf" data-v="100">Certain<small>100%</small></button></div></section>`;
-      if (S.sub && S.sub.kind === "fb") { const a = S.ans[id], ok = a.v === it.correct; return `<section class="center">${head}<div class="card fb ${ok ? "ok" : "no"}"><h2>${ok ? "Correct" : "Not quite"}</h2><p>${e(it.expl)}</p></div><button class="btn" data-act="qnext">Continue</button></section>`; }
+      if (S.sub && S.sub.kind === "fb") { const a = S.ans[id], ok = it.correctSet ? PF.sameSet(a.v, it.correctSet) : a.v === it.correct; return `<section class="center">${head}<div class="card fb ${ok ? "ok" : "no"}"><h2>${ok ? "Correct" : "Not quite"}</h2><p>${e(it.expl)}</p></div><button class="btn" data-act="qnext">Continue</button></section>`; }
       const text = e(it.text(c)), why = it.why ? `<details class="why"><summary>Why we ask</summary><p>${e(it.why)}</p></details>` : "";
       let body = "";
       if (it.fmt === "single") body = `<div class="opts">${optsFor(id).map((o) => `<button class="opt" data-act="pick" data-v='${e(JSON.stringify(o.v))}'>${e(o.label)}</button>`).join("")}</div>`;
@@ -151,7 +156,7 @@
     },
     mirror() {
       const un = unit(), ids = new Set(un.items), list = mirrorList();
-      return `<section><p class="eyebrow">The mirror · Round ${S.u + 1}</p><h1>${list.length ? "Your answers do not agree. Look closely." : "Mirror clear: your answers agree."}</h1>${list.map((c) => `<div class="card mir"><h3>${e(c.title)}</h3><p>${e(c.msg)}</p><p class="small">Which is closer to the truth?</p><div class="chips">${[["first", "My first answer"], ["second", "My second answer"], ["unsure", "I am not sure"]].map((o) => `<button class="chip ${S.mirror[c.id] === o[0] ? "on" : ""}" data-act="mir" data-id="${c.id}" data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`).join("")}${list.length ? '<p class="small">"I am not sure" is a valid, honest answer.</p>' : ""}<button class="btn" data-act="mnext" ${list.every((c) => S.mirror[c.id]) ? "" : "disabled"}>${S.u === 2 ? "See the verdict" : S.u + 1 < PF.UNITS.length ? "Next round" : "See my results"}</button></section>`;
+      return `<section><p class="eyebrow">The mirror · Round ${S.u + 1}</p><h1>${list.length ? "Your answers do not agree. Look closely." : "Mirror clear: your answers agree."}</h1>${list.map((c) => `<div class="card mir"><h3>${e(c.title)}</h3><p>${e(c.msg)}</p><p class="small">${c.q.length > 1 ? "Which is closer to the truth?" : "How do you take this?"}</p><div class="chips">${(c.q.length > 1 ? [["first", "My first answer"], ["second", "My second answer"], ["unsure", "I am not sure"]] : [["accept", "Fair point"], ["prove", "I can prove otherwise"], ["unsure", "I am not sure"]]).map((o) => `<button class="chip ${S.mirror[c.id] === o[0] ? "on" : ""}" data-act="mir" data-id="${c.id}" data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`).join("")}${list.length ? '<p class="small">"I am not sure" is a valid, honest answer.</p>' : ""}<button class="btn" data-act="mnext" ${list.every((c) => S.mirror[c.id]) ? "" : "disabled"}>${S.u === 2 ? "See the verdict" : S.u + 1 < PF.UNITS.length ? "Next round" : "See my results"}</button></section>`;
     },
     results() { return resultsScreen(); },
     rebuild() { return rebuildScreen(); },
@@ -230,8 +235,15 @@
   FIXES.c15 = ["Look at what the alternatives do badly, and build your edge there", "Say 'like X, but for Y' in your pitch and see if it still excites you", "Ask 5 customers why they use the alternatives"];
   FIXES.c16 = ["Find out why the others failed and write down three reasons", "Check how big the market really is, using real numbers", "Pick a smaller starting group where the problem is clearly bigger"];
   FIXES.b1 = ["Pick your most dangerous belief and design one cheap test this week", "Ask someone who has built a business to attack that belief", "Rewrite the belief as a question you will answer with data"];
+  FIXES.p1 = ["Pick one specific group you can reach this week and describe them in one line", "Ask 5 people in that group whether they face this problem", "Cut 'everyone' down to the smallest group that feels the pain most"];
+  FIXES.p2 = ["Spend one day watching someone face this problem", "Ask 10 people about the last time it happened to them", "Do the task yourself once and note every annoyance"];
+  FIXES.p3 = ["Look for a more frequent or more expensive part of the same problem", "Ask whether people would pay for a yearly or bundled solution", "Switch to a problem that happens weekly or costs more"];
+  FIXES.p4 = ["Ask 5 people what the problem really cost them last time", "Look for a bigger version of the problem in a bigger group", "Combine this with a neighbouring problem to make it worth solving"];
+  FIXES.p5 = ["Pick one campus, street or market to start", "List the first 50 people you could reach in person", "Prove it works in one place before you grow"];
+  FIXES.p6 = ["Rewrite your problem so it does not mention your product", "Ask 'what would this person say they struggle with?'", "Remove words like app, platform or AI from your problem"];
+  FIXES.c17 = ["Ask 5 people what they would pay, and what they pay today", "Lower your price expectation to the cost of the problem", "Find a bigger cost to solve"];
   const NEWDIR = ["Narrow to one small group of customers who clearly pay", "Pick a different problem you have personally lived and paid to solve", "Keep the idea, but find 10 people who will pay before you build anything"];
-  const alias = { c7b: "c7", c1b: "c1", g1: "c1", g2: "c5", c11a: "c11", c11b: "c11", c13b: "c13", c16b: "c16" };
+  const alias = { c7b: "c7", c1b: "c1", g1: "c1", g2: "c5", g3: "c12", c11a: "c11", c11b: "c11", c13b: "c13", c16b: "c16" };
   function flagsToFix(scope) {
     const r = PF.reality(S), seen = new Set(), out = [], isIdea = (c) => PF.IDEA_IDS.includes(c.id);
     r.checks.filter((c) => (scope === "idea" ? isIdea(c) : !isIdea(c))).sort((a, b) => b.sev - a.sev).forEach((c) => { const k = alias[c.id] || c.id; if (FIXES[k] && !seen.has(k) && out.length < 3) { seen.add(k); out.push({ id: k, title: c.title, msg: c.msg }); } });
@@ -269,9 +281,9 @@
     if (act === "reload") { setTimeout(() => location.reload(), 30); return; }
     if (act === "reset") { if (confirm("Clear everything and start over?")) { PF.store.reset(); S = fresh(); render(); } return; }
     if (act === "start") { const nm = document.getElementById("nm").value.trim(), st = document.getElementById("st").value.trim(); S.profile = { name: nm, startup: st || "My idea" }; S.seed = PF.hash(nm.toLowerCase() + "|" + st.toLowerCase()); return go("daydream"); }
-    if (act === "ddok") return go("flavour");
-    if (act === "flavour") { const f = PF.FLAVOURS.find((x) => x.id === d.id); S.flavour = f.id; if (f.shape === "router") { S.router = {}; return go("router"); } S.shape = f.shape; return go("unitIntro"); }
-    if (act === "route") { S.router[d.id] = d.v; if (Object.keys(S.router).length < 3) return go("router"); S.shape = PF.routeShape(S.router); return go("unitIntro"); }
+    if (act === "ddok") { S.u = 0; S.qi = 0; S.pi = 0; return go("unitIntro"); }
+    if (act === "flavour") { const f = PF.FLAVOURS.find((x) => x.id === d.id); S.flavour = f.id; if (f.shape === "router") { S.router = {}; return go("router"); } S.shape = f.shape; S.u = 3; S.qi = 0; S.pi = 0; return go("unitIntro"); }
+    if (act === "route") { S.router[d.id] = d.v; if (Object.keys(S.router).length < 3) return go("router"); S.shape = PF.routeShape(S.router); S.u = 3; S.qi = 0; S.pi = 0; return go("unitIntro"); }
     if (act === "unitgo") { S.pi = 0; S.qi = 0; S.cur = null; if (!S.t0) S.t0 = Date.now(); return go("prelude"); }
     if (act === "pnext") { if (S.pi + 1 < unit().prelude.length) { S.pi++; return go("prelude"); } S.qi = 0; S.cur = null; return go("q"); }
     if (act === "pick") return answer(curId(), jv());
@@ -286,7 +298,7 @@
     if (act === "snext") { const ids = mirrorList(); if (!ids.length) { return advanceUnit(); } return go("mirror"); }
     if (act === "mir") { S.mirror[d.id] = d.v; save(); return render(); }
     if (act === "mnext") { mirrorList().forEach((c) => S.shown.push(c.id)); return advanceUnit(); }
-    if (act === "verdictnext") { S.u = 3; S.qi = 0; S.pi = 0; S.cur = null; return go("unitIntro"); }
+    if (act === "verdictnext") { S.u = 3; S.qi = 0; S.pi = 0; S.cur = null; return go("flavour"); }
     if (act === "torebuild") return go("rebuild");
     if (act === "fix") { S.rebuild[d.id] = Number(d.v); save(); return render(); }
     if (act === "tomission") return go("missionBrief");
@@ -320,7 +332,7 @@
         const r = PF.rng(PF.hash("auto" + i + S.screen + S.qi));
         const scr = S.screen;
         if (scr === "intro") { S.profile = { name: "Test Founder", startup: "TestCo" }; S.seed = 1234; go("daydream"); }
-        else if (scr === "daydream") { S.daydream = 78; go("flavour"); }
+        else if (scr === "daydream") { S.daydream = 78; S.u = 0; go("unitIntro"); }
         else if (scr === "flavour") { S.flavour = S.flavour || "ecom"; S.shape = PF.FLAVOURS.find((f) => f.id === S.flavour).shape; go("unitIntro"); }
         else if (scr === "unitIntro") { S.pi = 0; S.qi = 0; go("prelude"); }
         else if (scr === "prelude") { S.qi = 0; go("q"); }
@@ -336,7 +348,7 @@
           else if (it.fmt === "tf" || it.fmt === "reflex") answer(id, r() < 0.5);
           else { const base = it.optsFn ? it.optsFn(S) : it.opts; const o = base[Math.floor(r() * base.length)]; answer(id, o.v); }
         }
-        else if (scr === "verdict") { flagsToFix("idea").forEach((f) => (S.rebuild[f.id] = 0)); S.rebuild.newdir = 0; S.u = 3; S.qi = 0; S.pi = 0; go("unitIntro"); }
+        else if (scr === "verdict") { flagsToFix("idea").forEach((f) => (S.rebuild[f.id] = 0)); S.rebuild.newdir = 0; S.u = 3; S.qi = 0; S.pi = 0; go("flavour"); }
         else if (scr === "story") { const l = mirrorList(); if (!l.length) advanceUnit(); else go("mirror"); }
         else if (scr === "mirror") { mirrorList().forEach((c) => { S.mirror[c.id] = "unsure"; S.shown.push(c.id); }); advanceUnit(); }
       }
