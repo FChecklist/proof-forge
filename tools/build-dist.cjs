@@ -14,7 +14,7 @@ const sha = (b) => createHash("sha256").update(b).digest("hex");
   const release = version + "+" + commit;
   const audit = process.argv[2] ? JSON.parse(fs.readFileSync(process.argv[2], "utf8")) : null;
   const relPub = JSON.parse(fs.readFileSync(path.join(root, "release-public-key.json"), "utf8"));
-  fs.writeFileSync(path.join(out, "js", "config.js"), "window.PF = window.PF || {};\nPF.CONFIG = " + JSON.stringify({ cloud: true, demo: false, auditKey: audit, releaseKey: relPub, version: release }) + ";\n");
+  fs.writeFileSync(path.join(out, "js", "config.js"), "window.PF = window.PF || {};\nPF.CONFIG = " + JSON.stringify({ cloud: true, demo: process.env.PF_DEMO === "1", auditKey: audit, releaseKey: relPub, version: release }) + ";\n");
   fs.writeFileSync(path.join(out, "_headers"), [
     "/*", "  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; font-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
     "  X-Content-Type-Options: nosniff", "  X-Frame-Options: DENY", "  Referrer-Policy: no-referrer", "  Permissions-Policy: camera=(), microphone=(), geolocation=()", "  X-Robots-Tag: noindex", "/api/*", "  Cache-Control: no-store", "/version.json", "  Cache-Control: no-store", ""].join("\n"));

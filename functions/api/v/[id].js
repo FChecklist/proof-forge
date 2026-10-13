@@ -14,7 +14,7 @@ export async function onRequestGet({ request, env, params }) {
 }
 export async function onRequestPut({ request, env, params }) {
   if (!ID.test(params.id)) return json({ error: "bad id" }, 400);
-  if (await limited(env, request, "vp", 900)) return json({ error: "slow down" }, 429);
+  if (await limited(env, request, "vp", 1800)) return json({ error: "slow down" }, 429);
   const secret = request.headers.get("x-write") || ""; if (secret.length < 16 || secret.length > 160) return json({ error: "secret required" }, 401);
   const raw = await request.text(); if (raw.length > MAXB) return json({ error: "too large" }, 413);
   let b; try { b = JSON.parse(raw); } catch (e) { return json({ error: "bad body" }, 400); }

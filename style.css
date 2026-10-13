@@ -175,3 +175,4 @@ input[type=file]{font:inherit;padding:8px;border:1.5px dashed #C9C3E4;border-rad
 .gate li{display:grid;gap:4px;padding:12px;border-radius:12px;background:#F8FAFC;border:1px solid #E5E7EB}
 .gate li.ok{border-color:#0B8F5E}.gate li.bad{border-color:#DC2626}
 .gate span{color:#475569;font-size:.92rem}
+.nodemo [data-act="mdemo"], .nodemo .chk.inline, .nodemo a.chip[href*="witness.html"] { display: none !important; }

@@ -10,7 +10,7 @@
   const WHY = [["demand", "Demand was weaker than I assumed"], ["time", "Everything took longer"], ["cost", "My cost numbers were off"], ["price", "My price was wrong"], ["small", "The test was too small to be reliable"]];
   const validUrl = (u) => { try { const x = new URL(String(u).trim()); return /^https?:$/.test(x.protocol) && x.hostname.includes("."); } catch (e) { return false; } };
   const wkey = (t) => "pf-w-" + t;
-  const readW = (t) => { try { return JSON.parse(localStorage.getItem(wkey(t))); } catch (x) { return null; } };
+  const readW = (t) => PF.readW(t); // opened answers held in memory first, then (demo builds) the browser
   const base = () => location.href.replace(/index\.html.*$/, "").replace(/#.*$/, "").replace(/\?.*$/, "");
 
   const predicted = (S) => { const f = PF.flow(S); if (!f) return null; return { days: Math.round(f.base.cycleDays), profitPct: (f.base.rev * (1 - f.base.leaks)) / 100000 - 1 }; };
@@ -80,8 +80,8 @@
       const m = M(S), f = F(S);
       if (act === "mstart") { m.issuedAt = m.issuedAt || Date.now(); m.witnesses = m.witnesses || []; h.go("missionSubmit"); return true; }
       if (act === "mset") { const k = d.k; f[k] = ["buy", "sell", "days", "buyers"].includes(k) ? Number(d.v) : d.v; h.save(); h.render(); return true; }
-      if (act === "madd") { const t = "w" + Math.random().toString(36).slice(2, 10); (m.witnesses = m.witnesses || []).push({ token: t, at: Date.now() }); h.save(); h.render(); return true; }
-      if (act === "mcopy") { const link = base() + "witness.html?t=" + d.t + "&n=" + encodeURIComponent((S.profile || {}).name || "") + "&u=" + encodeURIComponent((S.profile || {}).startup || ""); try { navigator.clipboard.writeText(link); } catch (x) { /* ignore */ } d.copied = true; alert("Link copied. Send it to your buyer on WhatsApp.\n\n" + link); return true; }
+      if (act === "madd") { const t = PF.MH.tok(); (m.witnesses = m.witnesses || []).push({ token: t, at: Date.now() }); h.save(); h.render(); return true; }
+      if (act === "mcopy") { const link = base() + "witness.html?t=" + d.t + "&n=" + encodeURIComponent((S.profile || {}).name || "") + "&u=" + encodeURIComponent((S.profile || {}).startup || "") + PF.wsuffix(S, d.t); try { navigator.clipboard.writeText(link); } catch (x) { /* ignore */ } d.copied = true; alert("Link copied. Send it to your buyer on WhatsApp.\n\n" + link); return true; }
       if (act === "mdemo") { m.witnesses = m.witnesses || []; const rels = ["stranger", "stranger", "classmate", "friend", "stranger", "family"]; rels.forEach((rel, i) => { const t = "sim" + Date.now().toString(36) + i; m.witnesses.push({ token: t, at: Date.now() }); localStorage.setItem(wkey(t), JSON.stringify({ answer: "yes", pay: "upi", rel, at: Date.now(), device: "sim-device-" + i })); }); h.save(); h.render(); return true; }
       if (act === "msubmit") {
         const G = PF.game, prev = m.verdict; m.verdict = evaluate(S); m.attempts = (m.attempts || 0) + 1; const v = m.verdict;

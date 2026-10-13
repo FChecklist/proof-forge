@@ -7,7 +7,7 @@
   const prof = (S) => S.profile || {};
   const wlink = (S, kind, t) => base() + "witness.html?k=" + kind + "&t=" + t + "&n=" + encodeURIComponent(prof(S).name || "") + "&u=" + encodeURIComponent(prof(S).startup || "") + "&p=" + (val(S, "price") || 0) + "&pr=" + encodeURIComponent(PF.problemSentence(S) || "") + PF.wsuffix(S, t);
   const golink = (S, t) => base() + "go.html?t=" + t + "&n=" + encodeURIComponent(prof(S).name || "") + "&u=" + encodeURIComponent(prof(S).startup || "") + "&p=" + (val(S, "price") || 0) + PF.wsuffix(S, t);
-  const newTok = (p) => p + Math.random().toString(36).slice(2, 10);
+  const newTok = (p) => p + Array.from(crypto.getRandomValues(new Uint8Array(12)), (b) => (b % 36).toString(36)).join("");
   const chipRow = (list, cur, act, key) => `<div class="chips">${list.map((x) => `<button class="chip ${cur === x[0] ? "on" : ""}" data-act="${act}" data-k="${key}" data-v="${x[0]}">${e(x[1])}</button>`).join("")}</div>`;
   const tile = (label, value, tone, sub) => `<div class="tile ${tone || ""}"><b>${value}</b><span>${e(label)}</span>${sub ? `<em>${e(sub)}</em>` : ""}</div>`;
   const wrows = (S, m, kind, label, okRel) => (m.witnesses || []).map((w, i) => { const r = PF.readW(w.token), same = r && r.device === PF.deviceId() && !m.allowSame; const st = !r ? "Waiting" : same ? "Same device: does not count" : r.answer === "no" ? "Says no" : "Confirmed" + (r.rel ? " (" + r.rel + ")" : ""); return `<div class="wrow ${!r ? "wait" : st.startsWith("Confirmed") ? "ok" : "bad"}"><span>${label} ${i + 1}</span><b>${st}</b><div class="chips"><button class="chip" data-act="wcopy" data-link="${e(wlink(S, kind, w.token))}">Copy link</button><a class="chip" target="_blank" rel="noopener" href="${e(wlink(S, kind, w.token))}">Open (demo)</a></div></div>`; }).join("");
@@ -195,7 +195,7 @@
     },
     click(act, d, S, h) {
       const m = MS(S, 4);
-      if (act === "mgo") { m.goToken = newTok("go"); h.save(); h.render(); return true; }
+      if (act === "mgo") { m.goToken = newTok("w"); h.save(); h.render(); return true; }
       if (act === "mdemo") { const t = m.goToken, g = goRead(t); for (let i = 0; i < 120; i++) g.visits["sim-v" + i] = Date.now(); for (let i = 0; i < 14; i++) g.signups.push({ rel: i % 3 === 0 ? "friend" : "stranger", device: "sim-s" + i, at: Date.now() }); for (let i = 0; i < 4; i++) g.preorders.push({ rel: i === 0 ? "friend" : "stranger", device: "sim-p" + i, at: Date.now() }); localStorage.setItem("pf-go-" + t, JSON.stringify(g)); h.save(); h.render(); return true; }
       return false;
     },

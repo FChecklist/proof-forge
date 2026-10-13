@@ -55,7 +55,7 @@
     ns.forEach((n) => { const m = MS(S, n); (m.witnesses || []).forEach((w) => { const r = PF.readW(w.token); if (r && r.k === kind && (m.allowSame || r.device !== dev)) out[r.device + "|" + w.token] = Object.assign({ n }, r); }); });
     // one confirmation per device for funders (the highest), so one person cannot be counted twice
     if (kind !== "funder") return Object.values(out);
-    const best = {}; Object.values(out).forEach((r) => { if (!best[r.device] || num(r.amt) > num(best[r.device].amt)) best[r.device] = r; });
+    const best = {}; Object.values(out).forEach((r) => { const k = r.n + "|" + r.device; if (!best[k] || num(r.amt) > num(best[k].amt)) best[k] = r; }); // the same person counts once per step: a later tranche in Step 12 is a new confirmation
     return Object.values(best);
   };
   const proofCount = (S, ns, key) => ns.reduce((a, n) => a + (((MS(S, n).fl || {})[key] || []).length), 0);
@@ -368,7 +368,7 @@
   // the investor-ready gate also checks that the ask and the locked funding target agree
   const gate0 = PF.gate;
   PF.gate = (S) => { const g = gate0(S), c = PF.contract(S), ask = PF.s4.askAmount(S);
-    if (c.fund && ask) g.checks.push({ id: "target", label: "Your ask and your funding target agree", ok: ask >= c.fund * 0.5 && ask <= c.fund * 2, note: "Your ask is " + money(ask) + " and your funding target is " + money(c.fund) + ". They must be within half and double of each other.", fix: 4 });
+    if (c.fund && ask) g.checks.push({ id: "target", label: "Your ask can reach the first quarter of your funding target", ok: ask >= c.fund * 0.25, note: "Your ask is " + money(ask) + ". A quarter of your funding target is " + money(c.fund * 0.25) + ", the amount that earns the first half of your deposit back.", fix: 4 });
     g.ready = g.checks.every((x) => x.ok); return g; };
 
   // levels: one more at the top, since Step 9 no longer ends the journey

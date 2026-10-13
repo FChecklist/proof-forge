@@ -16,6 +16,7 @@
     return S;
   };
 
+  if (!(PF.CONFIG && PF.CONFIG.demo)) document.documentElement.classList.add("nodemo");
   const L = (PF.life = {});
   L.boot = (S) => {
     PF.migrate(S);
@@ -36,9 +37,10 @@
     try { const pack = await PF.vault.auditPack(PF.auditBundle(S), PF.CONFIG.auditKey); const r = await post("/api/c", { t: S.access, v: PF.vault.id(), kind, code: PF.claimCode(S), pack }); if (r && r.ok) { S.mails["claim" + kind] = r.code; PF.store.save(S); } } catch (x) { /* retried the next time the verdict is opened */ S.mails["s" + (kind === "A" ? 9 : 12)] = 0; }
   };
   const v0 = PF.missionUI.verdict;
-  PF.missionUI.verdict = (S) => { const m = MS(S, S.step || 1); if (m.verdict && m.verdict.ok) setTimeout(() => L.passed(S, S.step || 1), 0); return v0(S); };
+  PF.missionUI.verdict = (S) => { const m = (S.step || 1) === 1 ? (S.mission || {}) : MS(S, S.step || 1); if (m.verdict && m.verdict.ok) setTimeout(() => L.passed(S, S.step || 1), 0); return v0(S); };
   const c0 = PF.missionUI.click;
   PF.missionUI.click = (act, d, S, h) => {
+    if (act === "mdemo" && !(PF.CONFIG && PF.CONFIG.demo)) return true; // demo shortcuts exist only in test builds: they would write readable data to the device
     if (act === "mydata") { if (S.screen !== "mydata") S.prevScreen = S.screen; h.go("mydata"); return true; }
     if (act === "mdback") { h.go(S.prevScreen && S.prevScreen !== "mydata" ? S.prevScreen : "intro"); return true; }
     if (act === "mdexport") { L.exportData(S); return true; }

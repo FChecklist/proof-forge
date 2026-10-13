@@ -72,7 +72,7 @@
     if (it.conf && (!extra || !extra.to)) { S.sub = { kind: "conf", id }; save(); return render(); }
     next();
   }
-  function next() { S.sub = null; S.qi++; if (S.qi >= queue().length) { save(); return go("story"); } save(); render(); window.scrollTo(0, 0); }
+  function next() { S.sub = null; S.qi++; if (S.qi >= queue().length) { save(); if (!unit().story) { return mirrorList().length ? go("mirror") : advanceUnit(); } return go("story"); } save(); render(); window.scrollTo(0, 0); }
 
   // ---------- band slider ----------
   function bandText(it, idx) { const v = it.vals[idx]; return it.money ? money(v) : v.toLocaleString("en-IN") + (it.unit === "%" ? "%" : it.unit ? " " + it.unit : ""); }

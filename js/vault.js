@@ -62,7 +62,7 @@
   const flush = (tries) => { saving = saving.then(() => put()).then(() => banner(false), () => { banner(true); setTimeout(() => flush((tries || 0) + 1), Math.min(30000, 2000 * ((tries || 0) + 1))); }); return saving; };
   V.flush = () => { clearTimeout(timer); return flush(0); };
   V.install = () => {
-    PF.store.load = () => mem && Object.keys(mem).length ? mem : null; PF.store.save = (s) => { mem = s; clearTimeout(timer); timer = setTimeout(() => flush(0), 400); }; PF.store.reset = () => { mem = {}; clearTimeout(timer); flush(0); };
+    PF.store.load = () => mem && Object.keys(mem).length ? mem : null; PF.store.save = (s) => { mem = s; clearTimeout(timer); timer = setTimeout(() => flush(0), 1500); }; PF.store.reset = () => { mem = {}; clearTimeout(timer); flush(0); };
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") V.flush(); });
     window.addEventListener("beforeunload", (e) => { if (cloud() && timer) { e.preventDefault(); e.returnValue = ""; } });
   };
