@@ -6,7 +6,15 @@
   const err = (m) => { const x = document.getElementById("verr"); if (x) x.textContent = m; };
   const busy = (on) => document.querySelectorAll("button").forEach((b) => (b.disabled = on));
   const cloud = PF.mail.on();
+  // the access link from the e-mail carries a token after #access=. We keep it in memory, never in storage, and take it out of the address bar.
+  (function () { const m = /[#&]access=([A-Za-z0-9_.-]{20,1200})/.exec(location.hash); if (m) { V.access = m[1]; try { history.replaceState(null, "", location.pathname + location.search); } catch (x) { /* ignore */ } } })();
+  function noAccessView() {
+    shell('<p class="eyebrow">Proof Forge</p><h1>Open it from your e-mail</h1><p class="lead">Proof Forge opens with the private link we e-mailed you after your payment. Open that e-mail and tap the link. If you cannot find it, paste the link below. Already have a vault? <a href="#" id="us">Unlock it</a>.</p><div class="card form"><label for="al">Your access link</label><input id="al" autocomplete="off"><p id="verr" class="note"></p><button class="btn" id="al-go">Continue</button></div><p class="small">No e-mail yet? Pay at the coaching site first, then the e-mail arrives within a minute.</p>');
+    document.getElementById("al-go").onclick = () => { const v = document.getElementById("al").value, m = /access=([A-Za-z0-9_.-]{20,1200})/.exec(v) || /^([A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)$/.exec(v.trim()); if (!m) return err("That does not look like the link we e-mailed you."); V.access = m[1]; createView(); };
+    document.getElementById("us").onclick = (ev) => { ev.preventDefault(); unlockView(); };
+  }
   function createView() {
+    if (cloud && !V.access) return noAccessView();
     shell('<p class="eyebrow">Your private vault</p><h1>Only you can read your data</h1><p class="lead">Everything you enter is locked on your own device with a key made from your passphrase. We store the locked copy for you. We cannot read it and we cannot reset it. Choose a passphrase you will remember (10 characters or more).</p>'
       + '<div class="card form"><label for="p1">Passphrase</label><input id="p1" type="password" autocomplete="new-password"><label for="p2">Again</label><input id="p2" type="password" autocomplete="new-password"><p id="verr" class="note"></p><button class="btn" id="mk">Create my vault</button>' + (cloud ? '<p class="small">Already have one? <a href="#" id="us">Unlock it</a></p>' : "") + "</div>");
     document.getElementById("mk").onclick = async () => {

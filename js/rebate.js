@@ -362,7 +362,7 @@
     const text = await PF.vault.auditPack(PF.auditBundle(S), PF.CONFIG.auditKey), a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([text], { type: "application/json" })); a.download = "proof-forge-audit-" + PF.claimCode(S) + ".pfaudit"; a.click();
   };
-  PF.claimCode = (S) => "PF-" + ((S.seed || 1) * 7919 % 100000).toString().padStart(5, "0") + "-" + new Date().getFullYear();
+  PF.claimCode = (S) => { const id = PF.vault && PF.vault.id && PF.vault.id(); S.claimYear = S.claimYear || new Date().getFullYear(); const n = id ? parseInt(id.slice(0, 7), 16) % 100000 : ((S.seed || 1) * 7919) % 100000; return "PF-" + String(n).padStart(5, "0") + "-" + S.claimYear; };
   PF.missions[9] = M9; PF.missions[10] = M10; PF.missions[11] = M11; PF.missions[12] = M12;
 
   // the investor-ready gate also checks that the ask and the locked funding target agree

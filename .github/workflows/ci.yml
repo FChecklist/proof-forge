@@ -1,0 +1,13 @@
+# Free checks on every push: the server functions, the build and signing, and the syntax of every script.
+name: ci
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: node test/server.test.mjs
+      - run: for f in js/*.js tools/*.cjs functions/api/*.js; do node --check "$f"; done

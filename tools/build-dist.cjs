@@ -6,7 +6,7 @@ const root = path.join(__dirname, ".."), out = path.join(root, "dist");
 const sha = (b) => createHash("sha256").update(b).digest("hex");
 (async () => {
   fs.rmSync(out, { recursive: true, force: true }); fs.mkdirSync(path.join(out, "js"), { recursive: true });
-  for (const f of ["index.html", "witness.html", "go.html", "style.css"]) fs.copyFileSync(path.join(root, f), path.join(out, f));
+  for (const f of ["index.html", "witness.html", "go.html", "style.css", "privacy.html", "terms.html"]) fs.copyFileSync(path.join(root, f), path.join(out, f));
   if (fs.existsSync(path.join(root, "assets"))) fs.cpSync(path.join(root, "assets"), path.join(out, "assets"), { recursive: true });
   for (const f of fs.readdirSync(path.join(root, "js"))) fs.copyFileSync(path.join(root, "js", f), path.join(out, "js", f));
   const version = fs.readFileSync(path.join(root, "VERSION"), "utf8").trim();

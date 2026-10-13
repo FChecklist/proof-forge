@@ -21,6 +21,7 @@
   V.exists = () => (cloud() ? !!localStorage.getItem(VID) : !!localStorage.getItem(META));
   V.knownId = () => localStorage.getItem(VID) || "";
   V.unlocked = () => !!key;
+  V.access = null; V.id = () => (meta ? meta.id : null);
   V.encrypt = async (obj, k) => { const iv = rnd(12); return JSON.stringify({ iv: b64(iv), ct: b64(await S_.encrypt({ name: "AES-GCM", iv }, k || key, enc.encode(JSON.stringify(obj)))) }); };
   V.decrypt = async (text, k) => { const o = JSON.parse(text); return JSON.parse(dec.decode(await S_.decrypt({ name: "AES-GCM", iv: ub64(o.iv) }, k || key, ub64(o.ct)))); };
   // the write secret is derived from the data key itself, so any way of unlocking (passphrase or recovery code) can save
@@ -54,7 +55,7 @@
     if (!cloud()) { if (blob === null) localStorage.removeItem(DATA); else localStorage.setItem(DATA, blob); return; }
     if (blob === null) return;
     const m = { v: meta.v, iter: meta.iter, pass: meta.pass, rec: meta.rec };
-    const r = await fetch("/api/v/" + meta.id, { method: "PUT", headers: Object.assign({ "x-write": secret, "content-type": "application/json" }, PF.hdr()), body: JSON.stringify({ meta: m, blob }), keepalive: blob.length < 60000 });
+    const r = await fetch("/api/v/" + meta.id, { method: "PUT", headers: Object.assign({ "x-write": secret, "content-type": "application/json" }, V.access ? { "x-access": V.access } : {}, PF.hdr()), body: JSON.stringify({ meta: m, blob, sv: PF.SCHEMA || 0 }), keepalive: blob.length < 60000 });
     if (!r.ok) throw new Error("save failed " + r.status);
   };
   const banner = (on) => { let b = document.getElementById("pf-save-warn"); if (on && !b) { b = document.createElement("div"); b.id = "pf-save-warn"; b.setAttribute("role", "alert"); b.style.cssText = "position:fixed;bottom:0;left:0;right:0;background:#B91C1C;color:#fff;padding:10px;text-align:center;z-index:99"; b.textContent = "Could not save to our storage. Your work is safe in this window; keep it open. Retrying."; document.body.appendChild(b); } else if (!on && b) b.remove(); };
@@ -65,6 +66,7 @@
     document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") V.flush(); });
     window.addEventListener("beforeunload", (e) => { if (cloud() && timer) { e.preventDefault(); e.returnValue = ""; } });
   };
+  V.del = async () => { const r = await fetch("/api/v/" + meta.id, { method: "DELETE", headers: Object.assign({ "x-write": secret }, PF.hdr()) }); if (!r.ok) throw new Error("delete failed"); };
   V.plainLegacy = () => { try { return JSON.parse(localStorage.getItem("pf-step1-v1")); } catch (e) { return null; } };
 
   // the audit pack: the founder's claim bundle, readable only by the audit team's private key (hybrid RSA-OAEP + AES-GCM)

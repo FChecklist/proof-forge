@@ -1,0 +1,29 @@
+# Hourly outside check: is the live site EXACTLY the signed release? Free (GitHub Actions, a few seconds per run).
+# Set the repository variable SITE_URL (Settings > Secrets and variables > Actions > Variables) once the site is live. Until then this does nothing.
+name: verify-live
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  issues: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the live site against the signed release
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          if [ -z "$SITE_URL" ]; then echo "SITE_URL not set yet: nothing to check."; exit 0; fi
+          node tools/verify-live.cjs "$SITE_URL" 2>&1 | tee result.txt
+          exit ${PIPESTATUS[0]}
+      - name: Raise the alarm
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create --repo "$GITHUB_REPOSITORY" --title "TAMPER CHECK FAILED $(date -u +%F\ %H:%M) UTC" --body "The live site does not match the signed release, or could not be checked. Open the failed run, read result.txt output, and if files differ: take the site down, rotate the Cloudflare token, redeploy from the repo. $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" || true

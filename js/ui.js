@@ -6,6 +6,7 @@
   let S = PF.store.load() || fresh();
   S.step = S.step || 1; S.ms = S.ms || {}; if (PF.setStep) PF.setStep(S.step);
   PF.game.soundOn = !!(S.game && S.game.sound);
+  if (PF.life) PF.life.boot(S);
   const save = () => PF.store.save(S);
   const go = (screen, extra) => { Object.assign(S, extra || {}, { screen, sub: null }); save(); render(); window.scrollTo(0, 0); };
   PF.getState = () => S;
@@ -36,7 +37,7 @@
   const overlayHTML = () => { const g = PF.game.g(S); if (!g.levelUp) return ""; const L = PF.game.LEVELS[g.levelUp - 1]; return `<div class="ovl" role="dialog" aria-modal="true" aria-label="Level up"><div class="ovl-card"><div class="ovl-ico">${L.icon}</div><p class="eyebrow">Level up</p><h1>Level ${L.n}: ${e(L.name)}</h1><p class="lead">${LVLMSG[L.n] || ""}</p><button class="btn" data-act="lvlok">Keep going</button></div></div>`; };
   function topbar() {
     const dots = PF.UNITS.map((u, i) => `<i class="dot ${i < S.u ? "done" : i === S.u && ["unitIntro", "prelude", "q", "story", "mirror", "verdict", "roundEnd"].includes(S.screen) ? "now" : ""}" title="Unit ${i + 1}: ${e(u.title)}"></i>`).join("");
-    return `<header class="top"><div class="wrap in"><a class="brand" href="#" data-act="home"><span class="mark">${FLOWER}</span><span>Proof Forge<small>Step ${S.step || 1} · ${e(PF.STEPS ? PF.STEPS[(S.step || 1) - 1].name : "The idea on trial")}</small></span></a><div class="dots" aria-label="Units">${dots}</div><div class="meta">${gstat()}<button class="mini" data-act="snd" aria-pressed="${PF.game.soundOn}">${PF.game.soundOn ? "Sound on" : "Sound off"}</button><button class="mini" data-act="reset" title="Start over (clears this browser)">Reset</button></div></div></header>`;
+    return `<header class="top"><div class="wrap in"><a class="brand" href="#" data-act="home"><span class="mark">${FLOWER}</span><span>Proof Forge<small>Step ${S.step || 1} · ${e(PF.STEPS ? PF.STEPS[(S.step || 1) - 1].name : "The idea on trial")}</small></span></a><div class="dots" aria-label="Units">${dots}</div><div class="meta">${gstat()}<button class="mini" data-act="snd" aria-pressed="${PF.game.soundOn}">${PF.game.soundOn ? "Sound on" : "Sound off"}</button><button class="mini" data-act="mydata">My data</button><button class="mini" data-act="reset" title="Start over (clears this browser)">Reset</button></div></div></header>`;
   }
   function render() {
     const fn = SCREENS[S.screen] || SCREENS.intro;
@@ -125,7 +126,7 @@
       <label class="chk"><input type="checkbox" id="c18"> I am 18 or older.</label>
       <label class="chk"><input type="checkbox" id="cc"> I understand the hard questions are <b>thought experiments to test how committed I am</b>. Nobody is asking me to take money from my family, or to do anything I do not choose to do. I can pause any time.</label>
       <button class="btn" id="startbtn" data-act="start" disabled>Begin</button></div>
-      <ul class="how"><li><b>7 short rounds.</b> Go at your own pace</li><li><b>Tap only.</b> True or false, choose, tick, slide</li><li>Questions come back later in <b>different shapes</b></li><li>The score rewards <b>honesty</b>, not big claims</li></ul><p class="small demo">Just looking? <a href="#demo=results" data-act="reload">Open a sample founder's result</a> · <a href="#demo=q:chain" data-act="reload">a sample question</a> · <a href="#demo=fail" data-act="reload">a rejected mission</a> · <a href="#demo=pass" data-act="reload">an accepted mission</a></p></section>`;
+      <ul class="how"><li><b>7 short rounds.</b> Go at your own pace</li><li><b>Tap only.</b> True or false, choose, tick, slide</li><li>Questions come back later in <b>different shapes</b></li><li>The score rewards <b>honesty</b>, not big claims</li></ul><p class="small"><a href="privacy.html" target="_blank" rel="noopener">Privacy notice</a> · <a href="terms.html" target="_blank" rel="noopener">Programme terms</a></p><p class="small demo">Just looking? <a href="#demo=results" data-act="reload">Open a sample founder's result</a> · <a href="#demo=q:chain" data-act="reload">a sample question</a> · <a href="#demo=fail" data-act="reload">a rejected mission</a> · <a href="#demo=pass" data-act="reload">an accepted mission</a></p></section>`;
     },
     daydream() {
       return `<section class="center"><p class="eyebrow">Before we start</p><h1>Be honest: how ready is your idea to get funded?</h1><p class="lead">0 means nobody would invest. 100 means investors will queue up. Your answer stays hidden until the end.</p><div class="card"><div class="big" id="ddv">${S.daydream}</div><input type="range" id="dd" min="0" max="100" value="${S.daydream}" aria-label="Readiness from 0 to 100"><div class="ends"><span>Not ready</span><span>Investors will queue</span></div><button class="btn" data-act="ddok">Lock in my answer</button></div></section>`;
@@ -185,6 +186,7 @@
       <div class="chips cc">${r.streak >= 2 ? `<span class="chip on">🔥 Momentum x${r.streak}</span>` : ""}<span class="chip">${e(next)}</span></div>
       <button class="btn" data-act="roundnext">${nextLabel()}</button></section>`;
     },
+    mydata() { return PF.life.myData(S); },
     results() { return resultsScreen(); },
     rebuild() { return rebuildScreen(); },
     missionBrief() { return PF.missionUI.brief(S); },
