@@ -33,7 +33,7 @@ export async function onRequestPut({ request, env, params }) {
     pay = tok.p;
   }
   await env.DB.prepare("INSERT INTO vault (id, secret_hash, meta, blob, at, pay, app_version, schema_v) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET meta = excluded.meta, blob = excluded.blob, at = excluded.at, app_version = excluded.app_version, schema_v = excluded.schema_v").bind(params.id, h, JSON.stringify(b.meta), b.blob, Date.now(), pay, av, sv).run();
-  await logEvent(env, request, cur ? "vault_save" : "vault_create", params.id);
+  if (!cur) await logEvent(env, request, "vault_create", params.id); // ordinary saves are not logged (the vault row keeps the time and software version): this keeps us far inside the free write limit
   return json({ ok: true });
 }
 export async function onRequestDelete({ request, env, params }) {

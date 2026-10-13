@@ -2,6 +2,7 @@
 export function fakeD1() {
   const t = { witness: new Map(), vault: new Map(), rl: new Map(), go: [], log: [], access: new Map(), notify: new Map(), claims: new Map() };
   const run = (sql, a) => {
+    t.writes = (t.writes || 0) + 1; // every statement that changes data, as a measure of how hard we lean on the free write limit
     if (sql.startsWith("INSERT OR IGNORE INTO witness")) { if (t.witness.has(a[0])) return 0; t.witness.set(a[0], { c: a[1], ip_hash: a[2], at: a[3] }); return 1; }
     if (sql.startsWith("INSERT INTO go_event")) { t.go.push({ token: a[0], c: a[1], ip_hash: a[2], at: a[3] }); return 1; }
     if (sql.startsWith("INSERT INTO audit_log")) { t.log.push({ id: t.log.length + 1, at: a[0], event: a[1], ref: a[2], version: a[3], device: a[4], ip_hash: a[5], prev_hash: a[6], hash: a[7] }); return 1; }

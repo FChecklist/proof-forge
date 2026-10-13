@@ -222,7 +222,7 @@
       if (act === "mstart") { m.issuedAt = m.issuedAt || Date.now(); m.witnesses = m.witnesses || []; h.go("missionSubmit"); return true; }
       if (act === "mset") { m[d.k] = d.v; h.save(); h.render(); return true; }
       if (act === "madd") { (m.witnesses = m.witnesses || []).push({ token: newTok("w"), at: Date.now() }); h.save(); h.render(); return true; }
-      if (act === "wcopy") { try { navigator.clipboard.writeText(d.link); } catch (x) { /* ignore */ } alert("Link copied. Send it on WhatsApp.\n\n" + d.link); return true; }
+      if (act === "wcopy") { try { Promise.resolve(navigator.clipboard.writeText(d.link)).catch(function () {}); } catch (x) { /* ignore */ } alert("Link copied. Send it on WhatsApp.\n\n" + d.link); return true; }
       if (act === "msubmit") {
         const prev = m.verdict; m.verdict = PF.missions[n].evaluate(S); m.attempts = (m.attempts || 0) + 1;
         if (prev && !prev.ok) G.award(S, "m" + n + ":retry:" + m.attempts, 20, "Grit: tried again after a rejection");

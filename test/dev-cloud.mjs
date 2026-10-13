@@ -5,6 +5,12 @@ import http from "node:http"; import fs from "node:fs"; import path from "node:p
 import * as W from "../functions/api/w/[token].js"; import * as G from "../functions/api/g/[token].js"; import * as V from "../functions/api/v/[id].js"; import * as N from "../functions/api/n.js"; import * as C from "../functions/api/c.js";
 import { fakeD1 } from "./fake-d1.mjs";
 const dist = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "dist");
+// the same security headers the real host will apply (dist/_headers), so a Content-Security-Policy mistake shows up in tests, not in production
+function headersFor() {
+  const hdrs = {};
+  try { let cur = null; for (const line of fs.readFileSync(path.join(dist, "_headers"), "utf8").split(/\r?\n/)) { if (line && !/^\s/.test(line)) cur = line.trim(); else if (cur === "/*" && line.trim()) { const k = line.indexOf(":"); hdrs[line.slice(0, k).trim()] = line.slice(k + 1).trim(); } } } catch (e) { /* no headers file */ }
+  return hdrs;
+}
 export const SECRET = "e2e-shared-secret";
 export function start(port = 8230) {
   const DB = fakeD1(), env = { DB, ACCESS_SECRET: SECRET, RESEND_API_KEY: "re_test", OWNER_EMAIL: "owner@example.com" }, mails = [];
@@ -14,7 +20,7 @@ export function start(port = 8230) {
   const server = http.createServer(async (req, res) => {
     const u = new URL(req.url, "http://localhost");
     if (u.pathname === "/__mails") { res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify(mails)); }
-    if (u.pathname === "/__db") { res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify({ witness: [...DB.t.witness.entries()], go: DB.t.go, vault: [...DB.t.vault.values()], log: DB.t.log, claims: [...DB.t.claims.values()], access: [...DB.t.access.entries()] })); }
+    if (u.pathname === "/__db") { res.writeHead(200, { "content-type": "application/json" }); return res.end(JSON.stringify({ witness: [...DB.t.witness.entries()], go: DB.t.go, writes: DB.t.writes, vault: [...DB.t.vault.values()], log: DB.t.log, claims: [...DB.t.claims.values()], access: [...DB.t.access.entries()] })); }
     const m = /^\/api\/(w|g|v)\/([^/]+)$/.exec(u.pathname), simple = /^\/api\/(n|c)$/.exec(u.pathname);
     if (m || simple) {
       const chunks = []; for await (const c of req) chunks.push(c); const body = Buffer.concat(chunks);
@@ -24,7 +30,9 @@ export function start(port = 8230) {
       res.writeHead(r.status, Object.fromEntries(r.headers)); return res.end(Buffer.from(await r.arrayBuffer()));
     }
     const f = path.join(dist, u.pathname === "/" ? "index.html" : u.pathname); if (!f.startsWith(dist) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { res.writeHead(404); return res.end("nf"); }
-    res.writeHead(200, { "content-type": MIME[path.extname(f)] || "application/octet-stream" }); res.end(fs.readFileSync(f));
+    // apply the same security headers the real host will (dist/_headers), so a Content-Security-Policy mistake shows up in tests, not in production
+    const hdrs = headersFor();
+    res.writeHead(200, Object.assign({ "content-type": MIME[path.extname(f)] || "application/octet-stream" }, hdrs)); res.end(fs.readFileSync(f));
   });
   return new Promise((ok) => server.listen(port, "127.0.0.1", () => ok({ server, env, mails, DB, port })));
 }

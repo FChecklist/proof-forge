@@ -133,6 +133,7 @@ const log = (...a) => console.log(...a);
         if (step === 7) { await setState("m.sent = 30; m.replies = 5; m.meetings = 2; m.files = [1, 2, 3, 4, 5].map((i) => ({ name: 'm' + i + '.png', size: 1 }));"); await plain("msg", [[4, 4, "yes"], [3, 3, "maybe"], [4, 3, "yes"], [3, 4, "no"]].map((x) => ({ clear: x[0], want: x[1], reply: x[2] }))); }
         if (step === 8) await plain("pitch", [["stranger", 4, 3, "yes", "yes", "price"], ["stranger", 3, 3, "maybe", "yes", "market"], ["stranger", 4, 4, "yes", "yes", "copy"], ["classmate", 3, 2, "maybe", "no", "price"], ["friend", 4, 3, "yes", "yes", "price"], ["stranger", 3, 3, "no", "yes", "price"]].map((x) => ({ rel: x[0], clear: x[1], believe: x[2], meet: x[3], who: x[4], doubt: x[5] })));
         await sync();
+        if (step === 8) for (const k of [...new Set(await p.$$eval("[data-act=mset]", (b) => b.map((x) => x.dataset.k)))]) { const sel = `[data-act=mset][data-k="${k}"]`; await click((await has(sel + "[data-v=price]")) ? sel + "[data-v=price]" : sel); }
       }
       else await realMission(step);
       await click("[data-act=msubmit]");
@@ -165,7 +166,8 @@ const log = (...a) => console.log(...a);
   const dev = await p.evaluate(() => { const o = {}; for (let i = 0; i < localStorage.length; i++) o[localStorage.key(i)] = localStorage.getItem(localStorage.key(i)).length; return o; });
   log("5. device storage:", JSON.stringify(Object.keys(dev)));
   for (const k of Object.keys(dev)) assert.ok(["pf-vault-id", "pf-device"].includes(k), "only the vault id and the browser id live on the device, found " + k);
-  for (const bad of ["Asha Rao", "KurtaKart", "founder@example.com", "stranger", "lawyer", "pay_E2EJOURNEY01"]) assert.ok(!dump.includes(bad), "storage never holds readable: " + bad);
+  for (const bad of ["Asha Rao", "KurtaKart", "founder@example.com", "stranger", "lawyer"]) assert.ok(!dump.includes(bad), "storage never holds readable: " + bad);
+  // the only payment identifier we hold is the payment service's own reference (needed to refund the right payment), never a name or an e-mail
   assert.ok(!dump.includes("9.9.9.9") && !dump.includes("7.7.7."), "no raw internet address in storage");
   assert.equal(db.claims.length, 2, "both claims stored"); assert.ok(db.claims.every((c) => !c.pack.includes("KurtaKart") && c.pack.length > 1000), "claim packs are locked");
   assert.ok(db.log.length > 20, "activity is logged (" + db.log.length + " rows)"); const v0 = db.vault[0]; assert.equal(v0.pay, "pay_E2EJOURNEY01"); assert.ok(/^1\.0\.0/.test(v0.app_version) || v0.app_version === "1.0.0+" || v0.app_version.length > 0, "software version kept: " + v0.app_version); assert.equal(v0.schema_v, 2, "data schema version kept");
@@ -179,6 +181,7 @@ const log = (...a) => console.log(...a);
   const dev2 = await (await b.newContext()).newPage(); await dev2.goto(B + "/index.html"); await dev2.waitForSelector("#us"); await dev2.click("#us"); await dev2.fill("#vid", vid); await dev2.fill("#p1", PASS); await dev2.click("#un"); await dev2.waitForFunction(() => window.PF && PF.getState && PF.getState().profile, null, { timeout: 30000 });
   assert.equal(await dev2.evaluate(() => PF.getState().profile.startup), "KurtaKart", "second device restores everything");
   log("8. a second device restored the whole journey from our locked copy");
+  const heap = await p.evaluate(() => (performance.memory ? Math.round(performance.memory.usedJSHeapSize / 1048576) : -1)); log("9. founder device memory in use by the page: about " + heap + " MB of JavaScript heap; rows held in our storage for the whole journey: vault " + db.vault.length + ", activity " + db.log.length + ", answers " + db.witness.length + ", visitor events " + db.go.length + ". Data-changing statements on our storage for the whole journey: " + db.writes + " (the free limit is 100,000 rows a day, so roughly " + Math.floor(100000 / db.writes) + " full journeys a day)");
   log(errs.length ? "PAGE ERRORS:\n" + errs.join("\n") : "no page errors");
   assert.equal(errs.length, 0);
   await b.close(); srv.server.close(); log("JOURNEY PASSED");

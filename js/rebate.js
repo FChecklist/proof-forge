@@ -372,7 +372,7 @@
     g.ready = g.checks.every((x) => x.ok); return g; };
 
   // levels: one more at the top, since Step 9 no longer ends the journey
-  G.LEVELS.push({ n: 9, name: "Earner", xp: 13500, icon: "🏁" });
+  G.LEVELS.push({ n: 9, name: "Earner", xp: 10800, icon: "🏁" });
 
   // demo founder
   const demo0 = PF.demoFill;
