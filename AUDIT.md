@@ -35,3 +35,10 @@ Legend: DONE = built and tested here. READY = built and tested, waiting on one o
 - A swapped website could capture passphrases: mitigated (signed releases, in-page and outside checks, strict headers), not eliminated.
 - No reminder or nudge e-mails (needs a scheduler).
 - Refund claims need the audit public key in the build (done) and the founder's browser to be online at the Step 9 and Step 12 pass; if it was not, the claim is retried the next time the verdict screen opens.
+
+## Change 7 Nov 2026: trust framing and vendor credit
+- Opening screen now carries the owner's two lines word for word (trust line first, then the selling line) and the framing "each step you pass earns the trust of customers, vendors or investors, on your way to raising funds".
+- Step 3 gains a fifth round, "Win a vendor's credit" (4 tap-only questions, `vcWhy/vcDays/vcOffer/vcAsked`), and Mission 3 gains a credit ask: vendor name, days asked, the vendor's answer, and the vendor's written reply attached. A "no" is accepted as honest proof; a missing record or missing reply fails the mission, so the gate can check it. Still 12 steps, step numbers, refund tiers (Step 9, Step 12) and the Rs 19,999 promise are unchanged.
+- The round's story is an empty slot on purpose: no story is shown until a real, sourced one is added.
+- Self-reported like the other quotes: the vendor reply is a file the founder attaches; the human audit remains the real check.
+- Tests: test/journey.cjs updated (credit ask recorded in Step 3) and passes end to end. Set PF_CHROME to a local Chrome path if Playwright's own browser is missing.

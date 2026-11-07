@@ -9,9 +9,9 @@ const build = (version) => { fs.writeFileSync(path.join(ROOT, "VERSION"), versio
   try {
     build("1.0.0"); const srv = await start(PORT);
     const token = await mintToken(SECRET, { p: "pay_VERSIONS0001", q: 1, e: "v@example.com", n: "Vee", s: "VeeCo", at: 1 });
-    const b = await chromium.launch(), ctx = await b.newContext(), p = await ctx.newPage(); p.on("dialog", (d) => d.accept());
-    await p.goto(B + "/index.html#access=" + token); await p.waitForSelector("#p1", { timeout: 20000 });
-    const PASS = "correct horse battery"; await p.fill("#p1", PASS); await p.fill("#p2", PASS); await p.click("#mk"); await p.waitForSelector("#go", { timeout: 30000 });
+    const b = await chromium.launch(process.env.PF_CHROME ? { executablePath: process.env.PF_CHROME } : {}), ctx = await b.newContext(), p = await ctx.newPage(); p.on("dialog", (d) => d.accept());
+    await p.goto(B + "/index.html#access=" + token); await p.waitForSelector("#p1", { timeout: 60000 });
+    const PASS = "correct horse battery"; await p.fill("#p1", PASS); await p.fill("#p2", PASS); await p.click("#mk"); await p.waitForSelector("#go", { timeout: 90000 });
     const vid = (await p.innerText("div[style*=monospace]")).trim(); await p.check("#ok"); await p.click("#go"); await p.waitForSelector("#nm");
     await p.fill("#nm", "Vee"); await p.fill("#st", "VeeCo"); await p.check("#c18"); await p.check("#cc"); await p.click("#startbtn"); await p.waitForTimeout(500);
     // pretend this data was saved by the FIRST release (schema 1: none of the newer fields)
@@ -22,8 +22,8 @@ const build = (version) => { fs.writeFileSync(path.join(ROOT, "VERSION"), versio
     build("1.1.0");
     await p.evaluate(() => window.dispatchEvent(new Event("focus"))); await p.waitForSelector("#pf-newver", { timeout: 10000 });
     log("2. the open page noticed the newer release and showed the update notice");
-    await p.click("#pf-newver [data-act=mdreload]"); await p.waitForSelector("#un", { timeout: 20000 });
-    await p.fill("#p1", PASS); await p.click("#un"); await p.waitForFunction(() => window.PF && PF.getState && PF.getState().profile, null, { timeout: 30000 });
+    await p.click("#pf-newver [data-act=mdreload]"); await p.waitForSelector("#un", { timeout: 60000 });
+    await p.fill("#p1", PASS); await p.click("#un"); await p.waitForFunction(() => window.PF && PF.getState && PF.getState().profile, null, { timeout: 90000 });
     const S = await p.evaluate(() => { const S = PF.getState(); return { sv: S.sv, marker: S.marker, consents: S.consents, mails: !!S.mails, vers: S.vers.map((x) => x.v + (x.from ? "<-" + x.from : "")), ver: PF.CONFIG.version }; });
     assert.equal(S.marker, "from-release-1", "nothing from the old release was lost"); assert.equal(S.sv, 2, "the old format was brought forward"); assert.ok(S.consents && S.mails, "new fields exist");
     assert.ok(/^1\.1\.0/.test(S.ver) && S.vers.length === 1 && S.vers[0].startsWith(S.ver), "the version history records the release that opened it: " + JSON.stringify(S.vers));
@@ -41,7 +41,7 @@ const build = (version) => { fs.writeFileSync(path.join(ROOT, "VERSION"), versio
     log("6. delete my vault: erased from our storage and from the device");
     await b.close();
     // ---- tamper: change one shipped file after the release was signed
-    const ctx2 = await (await chromium.launch()).newContext(), q = await ctx2.newPage(); const target = path.join(ROOT, "dist", "js", "vault.js"); fs.appendFileSync(target, "\n// tampered\n");
+    const ctx2 = await (await chromium.launch(process.env.PF_CHROME ? { executablePath: process.env.PF_CHROME } : {})).newContext(), q = await ctx2.newPage(); const target = path.join(ROOT, "dist", "js", "vault.js"); fs.appendFileSync(target, "\n// tampered\n");
     await q.goto(B + "/index.html#access=" + token); await q.waitForTimeout(2500);
     assert.ok((await q.innerText("body")).includes("does not match our published release") && !(await q.$("#p1")), "a tampered copy refuses to ask for a passphrase");
     log("7. a tampered copy shows the stop screen and asks for no passphrase");

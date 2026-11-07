@@ -10,7 +10,7 @@ const log = (...a) => console.log(...a);
   const { start, SECRET } = await import("./dev-cloud.mjs"); const { mintToken } = await import("../functions/api/_access.js");
   const srv = await start(PORT);
   const token = await mintToken(SECRET, { p: "pay_E2EJOURNEY01", q: 1, e: "founder@example.com", n: "Asha Rao", s: "KurtaKart", at: Date.now() });
-  const b = await chromium.launch(), ctx = await b.newContext(), p = await ctx.newPage(); const errs = [];
+  const b = await chromium.launch(process.env.PF_CHROME ? { executablePath: process.env.PF_CHROME } : {}), ctx = await b.newContext(), p = await ctx.newPage(); const errs = [];
   p.on("pageerror", (x) => errs.push("pageerror: " + x)); p.on("console", (m) => { if (m.type() === "error" && !/404|Failed to load resource/.test(m.text())) errs.push("console: " + m.text()); });
   p.on("dialog", (d) => d.accept()); global.__p = p;
   // ---- 1. the access link opens the gate; no link, no vault
@@ -125,7 +125,7 @@ const log = (...a) => console.log(...a);
           await click(`[data-act=mset][data-k=reading][data-v=${lvl}]`); await click("[data-act=mset][data-k=nextAct][data-v=more]");
         }
         if (step === 3) {
-          await setState("m.quotes = m.quotes || {}; PF.s3.mainCosts(S).forEach((r, bi) => { m.quotes[r.key] = [{ vendor: 'Vendor A' + bi, amt: Math.round(r.amt * 0.9), terms: 'advance' }, { vendor: 'Vendor B' + bi, amt: Math.round(r.amt * 1.1), terms: 'credit' }]; }); m.files = [{ name: 'quote1.png', size: 60000 }, { name: 'quote2.pdf', size: 80000 }];");
+          await setState("m.quotes = m.quotes || {}; PF.s3.mainCosts(S).forEach((r, bi) => { m.quotes[r.key] = [{ vendor: 'Vendor A' + bi, amt: Math.round(r.amt * 0.9), terms: 'advance' }, { vendor: 'Vendor B' + bi, amt: Math.round(r.amt * 1.1), terms: 'credit' }]; }); m.files = [{ name: 'quote1.png', size: 60000 }, { name: 'quote2.pdf', size: 80000 }]; m.credit = { vendor: 'Vendor B0', days: 30, outcome: 'part' }; m.vcFiles = [{ name: 'vendor-terms.pdf', size: 50000 }];");
           await plain("operator", [{ answer: "yes", hours: "8" }]);
         }
         if (step === 5) await setState("const a = PF.s4.askAmount(S), hs = ['startupindia.gov.in', 'nasscom.in', 'ah.vc', 'sidbi.in', 'indianangelnetwork.com', 'ycombinator.com', 'ivycap.com', 'birac.nic.in']; m.prog = hs.map((h2, i) => ({ name: 'Programme ' + (i + 1), url: 'https://www.' + h2 + '/apply', min: Math.round(a * 0.5), max: Math.round(a * 2), elig: i < 3 ? 'yes' : 'maybe' })); m.route = 'angel';");

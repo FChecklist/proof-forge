@@ -57,6 +57,11 @@
     bBuffer: bucket("bBuffer", "a safety buffer for surprises", "Plans meet bad months. A buffer is what keeps you alive."),
     bOther: bucket("bOther", "anything else", "Money with no bucket is hope, not a plan."),
     "reveal:buckets": { fmt: "reveal", kind: "buckets" },
+    // ---- Step 3, round 5: win a vendor's credit ----
+    vcWhy: { fmt: "single", knowledge: true, correct: "track", text: () => "Why would a vendor let a new founder pay later?", opts: [{ v: "nice", label: "Because the idea is exciting" }, { v: "track", label: "Because they trust you will pay: a record, a deposit, a customer order" }, { v: "pitch", label: "Because the pitch deck is good" }, { v: "pity", label: "Out of kindness" }], expl: "A vendor lends goods, not hope. Credit follows trust you can show: paid orders, a deposit, a record of paying on time.", why: "Credit is trust, measured by someone who risks their own stock." },
+    vcDays: { fmt: "band", vals: [0, 7, 15, 30, 45, 60, 90], def: 3, unit: "days", text: () => "How many days of credit would you ask your biggest vendor for?", hint: "Choose 0 if you will pay on delivery.", why: "Every day of credit is cash you keep in the business." },
+    vcOffer: { fmt: "single", text: () => "What will you show the vendor so they say yes?", opts: [{ v: "orders", label: "Real customer orders or deposits" }, { v: "advance", label: "A small advance, then more on time" }, { v: "story", label: "My idea and my plans" }, { v: "nothing", label: "Nothing, I will just ask" }], why: "A vendor says yes to proof. A plan is not proof." },
+    vcAsked: { fmt: "tf", conf: true, text: () => "I am ready to ask a real vendor, in writing, for credit terms, and to hear a no.", why: "Until a vendor has answered, credit is only a hope." },
     // ---- Step 4, round 1: burn ----
     bGut: { fmt: "reflex", seconds: 8, text: () => "Gut answer, 8 seconds: customers won with discounts will keep buying when the discounts end.", opts: [{ v: true, label: "TRUE" }, { v: false, label: "FALSE" }], why: "Your quick answer, to be compared with a reasoned one." },
     bDisc: { fmt: "band", vals: [0, 50, 100, 200, 300, 500, 1000], def: 2, money: true, text: () => "How much discount or free gift will you give each new customer?", hint: "Choose 0 if you will sell at full price.", why: "A discount is cash you give away." },
@@ -176,6 +181,11 @@
       { h: "Compare with your first number", p: "In Step 1 you gave a first number. We bring it back to see how far your buckets are from it." },
       { h: "Then prove it", p: "Next comes Mission 3. For your three biggest buckets you will collect real quotes. The part your quotes support is the part that is backed." }],
       story: { slot: true, theme: "A founder who asked for a big round and could not explain the use of funds", why: "Shows why backed money matters." } },
+    { id: 5, title: "Win a vendor's credit", finds: "Whether a real vendor trusts you enough to let you pay later.", items: ["vcWhy", "vcDays", "vcOffer", "vcAsked"], prelude: [
+      { h: "Vendors are the quiet investors", p: "A vendor who gives you 30 days to pay is lending you money without a contract. They will only do it if they trust you." },
+      { h: "Trust is earned in steps", p: "Customers trust you when they pay. Vendors trust you when you pay them, on time. Investors trust you when both have happened." },
+      { h: "Ask in writing, hear the answer", p: "In Mission 3 you will ask a real vendor for credit terms and record what they said. A no is proof too, and it tells you what to fix." }],
+      story: { slot: true, theme: "A founder who won, or lost, a vendor's credit and what it changed", why: "Shows how vendor trust is built. Add only a real, sourced story." } },
   ];
   const U4 = [
     { id: 1, title: "Who pays for the discounts?", finds: "What your discount plan really costs, and who stays.", items: ["bGut", "bDisc", "bCust", "bStay", "reveal:burn"], prelude: [
@@ -277,7 +287,7 @@
   PF.demoFill = (S, step) => {
     const A = (v, c) => ({ v, t: 1, ...(c ? { conf: c } : {}) });
     Object.assign(S.ans, { sRoles: A(["user", "decider", "payer"]), sFirstSay: A("payer"), sPayerReach: A("effort"), sListSource: A(["strangers", "shops", "groups"]), sFriendShare: A("few"), sKnow: A(false), fsGut: A(true), fsDaily: A(10), fsClose: A(5), fsMeet: A("half"), fsChannel: A(["walk", "dm"]), cLadder: A("deposit"), cNoPlan: A("why"), cPrice: A("mine"), cDeposit: A(true, 75), cExpect: A("many") });
-    if (step >= 3) Object.assign(S.ans, { jobs: A({ source: { who: "me", know: "rough" }, quality: { who: "me", know: "yes" }, pack: { who: "hire", know: "rough" }, dispatch: { who: "partner", know: "yes" }, returns: { who: "me", know: "rough" }, support: { who: "me", know: "yes" }, pay: { who: "me", know: "yes" }, comply: { who: "partner", know: "no" }, stock: { who: "me", know: "rough" }, hire: { who: "me", know: "no" }, accounts: { who: "partner", know: "yes" }, market: { who: "me", know: "rough" } }), opsLive: A("once"), tHours: A(30), tNeed: A(40), tHires: A(1), tPay: A(12000), tManage: A("few"), tScenario: A("talk"), mvp: A("whatsapp"), mvpCost: A(5000), mvpBelieve: A(false, 75), bStock: A(250000), bPeople: A(250000), bMarketing: A(100000), bTools: A(25000), bSpace: A(50000), bBuffer: A(100000), bOther: A(25000) });
+    if (step >= 3) Object.assign(S.ans, { vcWhy: A("track"), vcDays: A(30), vcOffer: A("orders"), vcAsked: A(true, 75), jobs: A({ source: { who: "me", know: "rough" }, quality: { who: "me", know: "yes" }, pack: { who: "hire", know: "rough" }, dispatch: { who: "partner", know: "yes" }, returns: { who: "me", know: "rough" }, support: { who: "me", know: "yes" }, pay: { who: "me", know: "yes" }, comply: { who: "partner", know: "no" }, stock: { who: "me", know: "rough" }, hire: { who: "me", know: "no" }, accounts: { who: "partner", know: "yes" }, market: { who: "me", know: "rough" } }), opsLive: A("once"), tHours: A(30), tNeed: A(40), tHires: A(1), tPay: A(12000), tManage: A("few"), tScenario: A("talk"), mvp: A("whatsapp"), mvpCost: A(5000), mvpBelieve: A(false, 75), bStock: A(250000), bPeople: A(250000), bMarketing: A(100000), bTools: A(25000), bSpace: A(50000), bBuffer: A(100000), bOther: A(25000) });
     if (step >= 4) Object.assign(S.ans, { bGut: A(false), bDisc: A(100), bCust: A(100), bStay: A(50), gStart: A(100), gRate: A(10), gOwner: A(true, 75), askPick: A("be"), askUse: A(["stock", "people", "marketing"]), askMilestone: A("c100"), askConf: A(true, 75) });
   };
 })();

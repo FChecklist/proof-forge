@@ -96,6 +96,8 @@
   };
 
   // ---------- Mission 3 ----------
+  const CRDAYS = [[7, "7 days"], [15, "15 days"], [30, "30 days"], [45, "45 days"], [60, "60+ days"]];
+  const CROUT = [["yes", "Credit granted"], ["part", "Granted, with a condition"], ["no", "Declined"], ["wait", "No answer yet"]];
   const TERMS = [["advance", "Pay in advance"], ["credit", "Credit allowed"], ["unknown", "Not stated"]];
   const quoteSlots = (m, key) => { m.quotes = m.quotes || {}; const q = (m.quotes[key] = m.quotes[key] || [{}, {}, {}]); while (q.length < 3) q.push({}); return q; };
   const M3 = {
@@ -107,6 +109,9 @@
       const files = (m.files || []).length; ck(files >= 2, files + " quote files attached", "Only " + files + " quote file(s). Attach at least 2 (a message screenshot, an e-mail or a price list).", "Attach the screenshots or PDFs of the quotes.");
       const ws = (m.witnesses || []).map((w) => PF.readW(w.token)).filter((r) => r && r.k === "operator" && r.answer === "yes" && (m.allowSame || r.device !== dev));
       ck(ws.length >= 1, ws.length + " operator confirmed your day", "No operator has confirmed that you spent a day working in their business.", "Spend a day inside a business like yours. Ask the owner to confirm your visit with the link.");
+      const c = m.credit || {}, vf = (m.vcFiles || []).length;
+      ck(!!(c.vendor && c.vendor.trim().length > 1) && !!c.days && !!c.outcome, "Credit asked of " + (c.vendor || "a vendor") + ": " + (CROUT.find((x) => x[0] === c.outcome) || ["", "answered"])[1].toLowerCase(), "You have not recorded a credit ask: the vendor, the days you asked for and what they answered.", "Ask one real vendor, in writing, for credit terms. Record the vendor, the days and the answer. A no counts.");
+      ck(vf >= 1, vf + " vendor reply attached", "No written reply from the vendor is attached.", "Attach the vendor's message, e-mail or terms sheet showing the credit answer.");
       const q = PF.s3.quoted(S);
       return { ok: fails.length === 0, fails, pass, q };
     },
@@ -114,7 +119,7 @@
       const main = PF.s3.mainCosts(S);
       return `<section><p class="eyebrow">Mission 3</p><h1>Replace your estimates with real prices</h1><p class="lead">Your money buckets are guesses until a vendor writes a price. Collect real quotes for your three biggest costs, and spend one day inside a real business like yours. Step 4 opens only when this is done.</p>
       <div class="card"><h2>Your three biggest costs</h2><ul class="ded">${main.map((r) => `<li><span>${e(r.label)}</span><b>${money(r.amt)}</b></li>`).join("") || "<li><span>No bucket filled yet. Go back to Round 4.</span></li>"}</ul></div>
-      <div class="card"><h2>What to do</h2><ol class="steps"><li>For each of the three costs, get <b>2 quotes</b> from different vendors.</li><li>Attach proof: a message screenshot, an e-mail or a price list.</li><li>Spend <b>one working day</b> inside a business like yours. Send the owner the link to confirm your visit.</li></ol></div>
+      <div class="card"><h2>What to do</h2><ol class="steps"><li>For each of the three costs, get <b>2 quotes</b> from different vendors.</li><li>Attach proof: a message screenshot, an e-mail or a price list.</li><li>Ask <b>one real vendor for credit</b>, in writing, and record the answer. A no counts as proof.</li><li>Spend <b>one working day</b> inside a business like yours. Send the owner the link to confirm your visit.</li></ol></div>
       <p class="small">Your total will be corrected to match the average of your quotes. The part your quotes support is called backed. At least half of your ask must be backed before you can approach investors.</p>
       <button class="btn" data-act="mstart">I accept the mission</button></section>`;
     },
@@ -124,6 +129,7 @@
       const files = (m.files || []);
       return `<section><p class="eyebrow">Mission 3 · quotes</p><h1>Bring the real prices</h1>${block}
       <div class="card"><h2>Proof of quotes</h2><p class="small">Screenshots, e-mails or price lists. At least 2.</p><input type="file" id="pf-quotes" accept="image/*,application/pdf" multiple><ul class="flist">${files.map((x) => `<li>${e(x.name)} <em>${Math.round(x.size / 1024)} KB</em></li>`).join("")}</ul></div>
+      <div class="card"><h2>Win a vendor's credit</h2><p class="small">Ask one real vendor to let you pay later. Record who, how many days you asked for, and what they said. A no is honest proof too. Attach their written reply.</p><input class="alt-in" id="vc-vendor" placeholder="Vendor name" value="${e((m.credit || {}).vendor || "")}" aria-label="Vendor you asked for credit">${chipRow(CRDAYS, (m.credit || {}).days, "vcday", "d")}${chipRow(CROUT, (m.credit || {}).outcome, "vcout", "o")}<input type="file" id="pf-vc" accept="image/*,application/pdf" multiple><ul class="flist">${(m.vcFiles || []).map((x) => `<li>${e(x.name)} <em>${Math.round(x.size / 1024)} KB</em></li>`).join("")}</ul></div>
       <div class="card"><h2>A day inside a business</h2><p class="small">The owner or manager opens the link on their own phone and confirms your visit.</p><div id="wlist">${wrows(S, m, "operator", "Operator") || '<p class="small">No link yet.</p>'}</div><div class="chips"><button class="btn small" data-act="madd">Add an operator link</button><button class="chip" data-act="mdemo">Demo: simulate an operator and sample quotes</button><label class="chk inline"><input type="checkbox" id="msame" ${m.allowSame ? "checked" : ""}> Demo: accept answers from this device</label></div></div>
       <button class="btn" data-act="msubmit">Submit for checking</button></section>`;
     },
@@ -136,12 +142,15 @@
     click(act, d, S, h) {
       const m = MS(S, 3);
       if (act === "qterm") { const [k, i] = d.k.split("|"); quoteSlots(m, k)[Number(i)].terms = d.v; h.save(); h.render(); return true; }
-      if (act === "mdemo") { PF.s3.mainCosts(S).forEach((r, bi) => { const q = quoteSlots(m, r.key); q[0] = { vendor: "Vendor A" + bi, amt: Math.round(r.amt * 0.9), terms: "advance" }; q[1] = { vendor: "Vendor B" + bi, amt: Math.round(r.amt * 1.1), terms: "credit" }; }); m.files = [{ name: "quote1.png", size: 60000 }, { name: "quote2.pdf", size: 80000 }]; const t = newTok("sim"); (m.witnesses = m.witnesses || []).push({ token: t }); localStorage.setItem("pf-w-" + t, JSON.stringify({ k: "operator", answer: "yes", hours: "8", device: "sim-op", at: Date.now() })); h.save(); h.render(); return true; }
+      if (act === "vcday") { (m.credit = m.credit || {}).days = Number(d.v); h.save(); h.render(); return true; }
+      if (act === "vcout") { (m.credit = m.credit || {}).outcome = d.v; h.save(); h.render(); return true; }
+      if (act === "mdemo") { m.credit = { vendor: "Vendor B0", days: 30, outcome: "part" }; m.vcFiles = [{ name: "vendor-terms.pdf", size: 50000 }]; PF.s3.mainCosts(S).forEach((r, bi) => { const q = quoteSlots(m, r.key); q[0] = { vendor: "Vendor A" + bi, amt: Math.round(r.amt * 0.9), terms: "advance" }; q[1] = { vendor: "Vendor B" + bi, amt: Math.round(r.amt * 1.1), terms: "credit" }; }); m.files = [{ name: "quote1.png", size: 60000 }, { name: "quote2.pdf", size: 80000 }]; const t = newTok("sim"); (m.witnesses = m.witnesses || []).push({ token: t }); localStorage.setItem("pf-w-" + t, JSON.stringify({ k: "operator", answer: "yes", hours: "8", device: "sim-op", at: Date.now() })); h.save(); h.render(); return true; }
       return false;
     },
     award(S, v, G) {
       G.award(S, "m3:attempt", 10, "Submitted quotes");
       v.pass.forEach((p, i) => { if (/real quotes/.test(p)) G.award(S, "m3:q:" + p.split(":")[0], 30, "Real quotes collected"); });
+      if (v.pass.some((p) => /^Credit asked/.test(p))) G.award(S, "m3:credit", 40, "A vendor was asked for credit");
       if (v.pass.some((p) => /operator confirmed/.test(p))) G.award(S, "m3:op", 40, "A day inside a real business");
       if (v.q.backedPct >= 50) G.award(S, "m3:backed", 60, "Half your money is backed");
       if (v.ok) { G.award(S, "m3:pass", 150, "Gate to Step 4 opened"); G.celebrate(S, "Gate to Step 4 is OPEN", "Real prices in hand", 150); }
@@ -149,6 +158,8 @@
     after() {
       const S = PF.getState(), m = MS(S, 3), f = document.getElementById("pf-quotes");
       if (f) f.onchange = () => { m.files = (m.files || []).concat(Array.from(f.files).map((x) => ({ name: x.name, size: x.size }))); PF.store.save(S); PF.ui.render(); };
+      const vf = document.getElementById("pf-vc"); if (vf) vf.onchange = () => { m.vcFiles = (m.vcFiles || []).concat(Array.from(vf.files).map((x) => ({ name: x.name, size: x.size }))); PF.store.save(S); PF.ui.render(); };
+      const vv = document.getElementById("vc-vendor"); if (vv) vv.onchange = () => { (m.credit = m.credit || {}).vendor = vv.value; PF.store.save(S); };
       document.querySelectorAll("[data-q]").forEach((el) => { el.onchange = () => { quoteSlots(m, el.dataset.q)[Number(el.dataset.i)][el.dataset.f] = el.value; PF.store.save(S); }; });
       M2.after();
     },

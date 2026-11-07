@@ -176,3 +176,5 @@ input[type=file]{font:inherit;padding:8px;border:1.5px dashed #C9C3E4;border-rad
 .gate li.ok{border-color:#0B8F5E}.gate li.bad{border-color:#DC2626}
 .gate span{color:#475569;font-size:.92rem}
 .nodemo [data-act="mdemo"], .nodemo .chk.inline, .nodemo a.chip[href*="witness.html"] { display: none !important; }
+
+.trust1,.trust2{margin:10px 0;padding:12px 14px;border-left:4px solid var(--a1);background:var(--ap);border-radius:8px;color:var(--ink);font-size:1rem;line-height:1.45}.trust1{font-weight:700}.trust2{font-weight:500}

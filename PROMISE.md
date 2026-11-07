@@ -29,3 +29,6 @@ Rejected: "get it back as you earn it" (flat), "Make it work, and it's free" (va
 - Every release has a version (file VERSION + git commit). `node tools/build-dist.cjs` fingerprints every shipped file (SHA-256) into version.json and signs it with the RELEASE key (private key at C:\Users\Dell\Documents\proof-forge-RELEASE-PRIVATE-KEY.jwk, offline, owner-held; public key release-public-key.json).
 - Inside the page, js/integrity.js checks the signature and every file before it asks for a passphrase; on a mismatch it shows a stop screen. Swapped code could skip that, so the real defence is OUTSIDE: `node tools/verify-live.cjs <site>` uses the public key in this repo and exits 1 on any change. Schedule it (hourly) from somewhere we control; any failure means act at once and rotate the Cloudflare token.
 - Our records (D1 audit_log, hash-chained so an edited or removed row is detected): time, event (vault_open, vault_save, answer, visitor), vault id, browser id (random, made by the browser; NOT a hardware id, which websites cannot and should not read), software version, salted address hash. Never content. State this in the privacy notice.
+
+## 7 Nov 2026
+Nothing in the promise changed. Rs 19,999 to start; half back at Step 9; all back at Step 12 when the targets are met. The new vendor-credit round is part of Step 3 and adds no step, fee or refund condition.
