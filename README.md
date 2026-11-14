@@ -27,3 +27,6 @@ Needs a Cloudflare API token that also has Account > D1 > Edit. Then: `powershel
 ## Keys (never in this repo)
 - Release signing key: `C:\Users\Dell\Documents\proof-forge-RELEASE-PRIVATE-KEY.jwk`. Audit key: `...\proof-forge-AUDIT-PRIVATE-KEY.jwk`. Back both up offline.
 - `ACCESS_SECRET` and `IP_SALT` are in `C:\ct\ct\.env.local` (git-ignored) and in the Pages secrets.
+
+
+See [KNOWLEDGE-MAP.md](KNOWLEDGE-MAP.md) for what this repository is for and what the other repositories are for (updated 14 Nov 2026).
