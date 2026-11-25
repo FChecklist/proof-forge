@@ -10,4 +10,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: node test/server.test.mjs
+      - run: node test/mark139.test.cjs
       - run: for f in js/*.js tools/*.cjs functions/api/*.js; do node --check "$f"; done

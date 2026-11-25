@@ -57,7 +57,7 @@
   };
   L.del = async (S) => {
     if (!confirm("Delete your vault for good? Everything you entered is erased from our storage and cannot be brought back, even by us.")) return;
-    try { await PF.vault.del(); localStorage.removeItem("pf-vault-id"); PF.vault.lock(); document.body.innerHTML = '<main class="wrap main"><section class="center"><h1>Your vault is deleted</h1><p class="lead">Your data has been erased from our storage. You can close this page. Your payment record stays with the payment service, and a pseudonymous activity record stays for audit (see the privacy notice).</p></section></main>'; }
+    try { await PF.vault.del(); localStorage.removeItem("pf-vault-id"); PF.vault.lock(); document.body.innerHTML = '<div class="mark139" lang="hi" aria-hidden="true"><span>१३९</span></div><main class="wrap main"><section class="center"><h1>Your vault is deleted</h1><p class="lead">Your data has been erased from our storage. You can close this page. Your payment record stays with the payment service, and a pseudonymous activity record stays for audit (see the privacy notice).</p></section></main>'; }
     catch (x) { alert("Could not delete right now. Check your connection and try again."); }
   };
   L.myData = (S) => {
