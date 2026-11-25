@@ -30,3 +30,6 @@ Needs a Cloudflare API token that also has Account > D1 > Edit. Then: `powershel
 
 
 See [KNOWLEDGE-MAP.md](KNOWLEDGE-MAP.md) for what this repository is for and what the other repositories are for (updated 14 Nov 2026).
+
+## Release notes
+- 1.0.1 (25 Nov 2026): the small mark "१३९" (6px, bold, dark blue, thin dark red line under it) sits at the very top centre of every page: `index.html`, `go.html`, `witness.html`, `privacy.html`, `terms.html` and the vault-deleted screen in `js/life.js`. CSS is in `style.css` (and `style.template.css`). Guard test: `node test/mark139.test.cjs` (also run by CI). No other change.

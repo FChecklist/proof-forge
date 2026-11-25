@@ -62,3 +62,6 @@ One portal where every product shows its AI-facing API on one page, built step b
 - Check this map before building anything, so you do not rebuild what another repository already does.
 
 Other older repositories (jyotish-*, veridian-brain, veridian-ai-os, veridian-bridge and similar) are outside this map unless their own README says otherwise. Ask BOSS.
+
+## Release 1.0.1 (25 Nov 2026)
+The mark "१३९" is at the top centre of every page (owner order, approved 25 Nov 2026). Guard: `test/mark139.test.cjs`.
